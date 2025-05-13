@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { NotebookIcon, SparklesIcon, WrenchIcon, BeerIcon, SettingsIcon } from 'lucide-react'; // Removed PanelLeft, SidebarTrigger handles its icon
 import { Toaster } from "@/components/ui/toaster";
+import { useClient } from '@/hooks/use-client';
 
 interface NavItem {
   href: string;
@@ -35,19 +36,42 @@ const navItems: NavItem[] = [
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const isClient = useClient();
+
+
+  if (!isClient) {
+    // Render a placeholder or null on the server and initial client render
+    // to avoid hydration mismatches related to useIsMobile or other client-side hooks in Sidebar
+    return (
+      <div className="flex min-h-svh w-full">
+        <div className="w-16 bg-muted/40 md:w-64"> {/* Simplified skeleton sidebar */}
+          <div className="p-4 h-14 border-b"></div>
+          <div className="p-4 space-y-2">
+            <div className="h-8 bg-muted rounded"></div>
+            <div className="h-8 bg-muted rounded"></div>
+            <div className="h-8 bg-muted rounded"></div>
+          </div>
+        </div>
+        <main className="flex-1 p-4 md:p-6 lg:p-8">
+          {children}
+          <Toaster />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider defaultOpen>
       <Sidebar collapsible="icon">
         <SidebarRail /> 
         <SidebarHeader className="p-4 flex justify-between items-center">
-          <div className="flex items-center gap-2"> {/* Wrapper for logo and name */}
-            <Link href="/" className="flex items-center gap-1 text-lg font-semibold text-sidebar-foreground hover:text-sidebar-primary transition-colors">
-              <BeerIcon className="h-7 w-7 text-sidebar-primary" />
-              <span className="group-data-[collapsible=icon]:hidden">BrewMate</span>
-            </Link>
-          </div>
-          {/* Desktop Sidebar Toggle Button, to the right of the header items */}
+          <Link href="/" className="flex items-center gap-1 text-lg font-semibold text-sidebar-foreground hover:text-sidebar-primary transition-colors">
+            {/* BeerIcon is hidden when the sidebar is in 'icon' (collapsed) mode */}
+            <BeerIcon className="h-7 w-7 text-sidebar-primary group-data-[collapsible=icon]:hidden" />
+            {/* BrewMate text is hidden when sidebar is in 'icon' (collapsed) mode */}
+            <span className="group-data-[collapsible=icon]:hidden">BrewMate</span>
+          </Link>
+          {/* Desktop Sidebar Toggle Button, to the right of the name/logo block */}
           <SidebarTrigger className="hidden md:flex" />
         </SidebarHeader>
         <SidebarContent>
@@ -95,3 +119,4 @@ export function AppLayout({ children }: { children: ReactNode }) {
     </SidebarProvider>
   );
 }
+
