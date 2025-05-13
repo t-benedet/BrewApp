@@ -4,8 +4,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useRecipeStore } from '@/lib/store';
-import type { Recipe, Grain, Hop } from '@/types'; // Removed Yeast as it's singular in Recipe
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Removed CardDescription
+import type { Recipe, Grain, Hop } from '@/types'; 
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { ArrowLeftIcon, BeerIcon, CalendarDaysIcon, EditIcon, InfoIcon, LayersIc
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { BeerMugDisplay } from '@/components/recipes/BeerMugDisplay';
 
 export default function RecipeDetailPage() {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function RecipeDetailPage() {
   useEffect(() => {
     if (recipeId) {
       const foundRecipe = getRecipeById(recipeId);
-      setRecipe(foundRecipe || null); // Set to null if not found
+      setRecipe(foundRecipe || null);
     }
   }, [recipeId, getRecipeById]);
 
@@ -33,65 +34,66 @@ export default function RecipeDetailPage() {
     return (
       <div className="container mx-auto py-8 text-center">
         <p className="text-xl text-muted-foreground">Recette non trouvée ou en cours de chargement...</p>
+        <Button onClick={() => router.push('/recipes')} className="mt-4">
+          <ArrowLeftIcon className="mr-2 h-4 w-4" /> Retour aux recettes
+        </Button>
       </div>
     );
   }
 
   const statDisplay = (label: string, value: number | undefined, unit: string, max: number, toFixedValue: number = 0) => (
     value !== undefined && (
-      <div className="mb-2">
+      <div className="mb-3">
         <div className="flex justify-between text-sm mb-1">
-          <span>{label} ({value.toFixed(toFixedValue)} {unit})</span>
-          <span className="text-muted-foreground">{max > 0 ? ((value / max) * 100).toFixed(0) : 0}%</span>
+          <span className="font-medium">{label}</span>
+          <span className="text-muted-foreground">{value.toFixed(toFixedValue)} {unit}</span>
         </div>
-        <Progress value={max > 0 ? (value / max) * 100 : 0} className="h-2" />
+        <Progress value={max > 0 ? (value / max) * 100 : 0} className="h-2" aria-label={`${label}: ${value.toFixed(toFixedValue)} ${unit}, ${((value / max) * 100).toFixed(0)}%`} />
       </div>
     )
   );
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
-      <div className="flex justify-between items-center">
-        <Button variant="outline" onClick={() => router.back()} className="mb-4">
+    <div className="container mx-auto py-6 sm:py-8 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-6">
+        <Button variant="outline" onClick={() => router.back()} className="w-full sm:w-auto">
           <ArrowLeftIcon className="mr-2 h-4 w-4" /> Retour
         </Button>
-        <Button variant="outline" asChild>
+        <Button variant="default" asChild className="w-full sm:w-auto">
           <Link href={`/recipes/edit/${recipe.id}`}>
-            <EditIcon className="mr-2 h-4 w-4" /> Modifier
+            <EditIcon className="mr-2 h-4 w-4" /> Modifier la recette
           </Link>
         </Button>
       </div>
 
-
-      {/* Beer Name */}
-      <Card className="shadow-lg">
-        <CardHeader className="flex flex-row justify-between items-center">
-          <CardTitle className="text-3xl font-bold text-primary flex items-center gap-2">
-            <BeerIcon className="h-8 w-8" />
+      <Card className="shadow-lg rounded-xl overflow-hidden">
+        <CardHeader className="bg-primary/10 p-4 sm:p-6">
+          <CardTitle className="text-2xl sm:text-3xl font-bold text-primary flex items-center gap-3">
+            <BeerIcon className="h-7 w-7 sm:h-8 sm:w-8" />
             {recipe.name}
           </CardTitle>
         </CardHeader>
       </Card>
 
-      {/* General Info & Stats */}
-      <Card className="shadow-md">
-        <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2"><InfoIcon className="h-5 w-5 text-accent"/>Informations Générales & Statistiques</CardTitle>
+      <Card className="shadow-md rounded-lg">
+        <CardHeader className="p-4 sm:p-6 border-b">
+            <CardTitle className="text-lg sm:text-xl flex items-center gap-2 font-semibold">
+                <InfoIcon className="h-5 w-5 text-accent"/>Informations & Statistiques
+            </CardTitle>
         </CardHeader>
-        <CardContent className="grid md:grid-cols-2 gap-6">
-          {/* Left: Style & Volume */}
-          <div className="space-y-3">
+        <CardContent className="p-4 sm:p-6 grid md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+             <BeerMugDisplay ebcColor={recipe.colorEBC ?? undefined} className="mx-auto md:mx-0 mb-4" />
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Style</h3>
-              <p className="text-lg">{recipe.style}</p>
+              <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">Style</h3>
+              <p className="text-md sm:text-lg font-semibold">{recipe.style}</p>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Volume Cible</h3>
-              <p className="text-lg">{recipe.volume} Litres</p>
+              <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">Volume Cible</h3>
+              <p className="text-md sm:text-lg font-semibold">{recipe.volume} Litres</p>
             </div>
           </div>
-          {/* Right: Stats with Gauges */}
-          <div>
+          <div className="pt-2">
             {statDisplay("Densité Initiale", recipe.initialGravity, "SG", 1.150, 3)}
             {statDisplay("Densité Finale", recipe.finalGravity, "SG", 1.050, 3)}
             {statDisplay("Couleur", recipe.colorEBC, "EBC", 100, 0)}
@@ -101,25 +103,24 @@ export default function RecipeDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Grains & Sugars */}
       {recipe.grains && recipe.grains.length > 0 && (
-        <Card className="shadow-md">
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2"><WheatIcon className="h-5 w-5 text-accent"/>Céréales et Sucres</CardTitle>
+        <Card className="shadow-md rounded-lg">
+          <CardHeader className="p-4 sm:p-6 border-b">
+            <CardTitle className="text-lg sm:text-xl flex items-center gap-2 font-semibold"><WheatIcon className="h-5 w-5 text-accent"/>Céréales et Sucres</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 sm:p-2">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead className="text-right">Poids (g)</TableHead>
+                  <TableHead className="px-4 py-3 sm:px-6">Nom</TableHead>
+                  <TableHead className="text-right px-4 py-3 sm:px-6">Poids (g)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {recipe.grains.map((grain: Grain) => (
                   <TableRow key={grain.id}>
-                    <TableCell>{grain.name}</TableCell>
-                    <TableCell className="text-right">{grain.weight.toLocaleString()}</TableCell>
+                    <TableCell className="px-4 py-3 sm:px-6 font-medium">{grain.name}</TableCell>
+                    <TableCell className="text-right px-4 py-3 sm:px-6">{grain.weight.toLocaleString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -128,29 +129,29 @@ export default function RecipeDetailPage() {
         </Card>
       )}
 
-      {/* Hops */}
       {recipe.hops && recipe.hops.length > 0 && (
-        <Card className="shadow-md">
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2"><HopIcon className="h-5 w-5 text-accent"/>Houblons</CardTitle>
+        <Card className="shadow-md rounded-lg">
+          <CardHeader className="p-4 sm:p-6 border-b">
+            <CardTitle className="text-lg sm:text-xl flex items-center gap-2 font-semibold"><HopIcon className="h-5 w-5 text-accent"/>Houblons</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 sm:p-2">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead className="text-right">Poids (g)</TableHead>
-                  <TableHead>Format</TableHead>
-                  <TableHead className="text-right">% Alpha</TableHead>
+                  <TableHead className="px-4 py-3 sm:px-6">Nom</TableHead>
+                  <TableHead className="text-right px-4 py-3 sm:px-6 hidden sm:table-cell">Poids (g)</TableHead>
+                  <TableHead className="px-4 py-3 sm:px-6">Info</TableHead> {/* Combined for mobile */}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {recipe.hops.map((hop: Hop) => (
                   <TableRow key={hop.id}>
-                    <TableCell>{hop.name}</TableCell>
-                    <TableCell className="text-right">{hop.weight.toLocaleString()}</TableCell>
-                    <TableCell>{hop.format}</TableCell>
-                    <TableCell className="text-right">{hop.alphaAcid ? hop.alphaAcid.toFixed(1) : 'N/A'}%</TableCell>
+                    <TableCell className="px-4 py-3 sm:px-6 font-medium">{hop.name}</TableCell>
+                    <TableCell className="text-right px-4 py-3 sm:px-6 hidden sm:table-cell">{hop.weight.toLocaleString()}</TableCell>
+                    <TableCell className="px-4 py-3 sm:px-6">
+                        <div className="sm:hidden text-xs text-muted-foreground">{hop.weight.toLocaleString()}g</div>
+                        {hop.format} ({hop.alphaAcid ? hop.alphaAcid.toFixed(1) : 'N/A'}% AA)
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -159,26 +160,25 @@ export default function RecipeDetailPage() {
         </Card>
       )}
 
-      {/* Yeast */}
       {recipe.yeast && recipe.yeast.name && (
-        <Card className="shadow-md">
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2"><LayersIcon className="h-5 w-5 text-accent"/>Levure</CardTitle>
+        <Card className="shadow-md rounded-lg">
+          <CardHeader className="p-4 sm:p-6 border-b">
+            <CardTitle className="text-lg sm:text-xl flex items-center gap-2 font-semibold"><LayersIcon className="h-5 w-5 text-accent"/>Levure</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 sm:p-2">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Poids/Qté (g)</TableHead>
+                  <TableHead className="px-4 py-3 sm:px-6">Nom</TableHead>
+                  <TableHead className="px-4 py-3 sm:px-6">Type</TableHead>
+                  <TableHead className="text-right px-4 py-3 sm:px-6">Poids/Qté (g)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 <TableRow>
-                  <TableCell>{recipe.yeast.name}</TableCell>
-                  <TableCell>{recipe.yeast.type}</TableCell>
-                  <TableCell className="text-right">{recipe.yeast.weight.toLocaleString()}</TableCell>
+                  <TableCell className="px-4 py-3 sm:px-6 font-medium">{recipe.yeast.name}</TableCell>
+                  <TableCell className="px-4 py-3 sm:px-6">{recipe.yeast.type}</TableCell>
+                  <TableCell className="text-right px-4 py-3 sm:px-6">{recipe.yeast.weight.toLocaleString()}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -186,35 +186,33 @@ export default function RecipeDetailPage() {
         </Card>
       )}
       
-      {/* AI Recipe Instructions (if available) */}
       {recipe.instructions && (
-        <Card className="shadow-md">
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2">Instructions de Brassage</CardTitle>
+        <Card className="shadow-md rounded-lg">
+          <CardHeader className="p-4 sm:p-6 border-b">
+            <CardTitle className="text-lg sm:text-xl flex items-center gap-2 font-semibold">Instructions de Brassage</CardTitle>
           </CardHeader>
-          <CardContent>
-            <pre className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-md">{recipe.instructions}</pre>
+          <CardContent className="p-4 sm:p-6">
+            <pre className="whitespace-pre-wrap text-sm bg-muted/30 p-3 sm:p-4 rounded-md font-sans">{recipe.instructions}</pre>
           </CardContent>
         </Card>
       )}
 
-      {/* Fermentation & Notes */}
       {(recipe.fermentationStartDate || recipe.notes) && (
-        <Card className="shadow-md">
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2"><CalendarDaysIcon className="h-5 w-5 text-accent"/>Fermentation et Notes</CardTitle>
+        <Card className="shadow-md rounded-lg">
+          <CardHeader className="p-4 sm:p-6 border-b">
+            <CardTitle className="text-lg sm:text-xl flex items-center gap-2 font-semibold"><CalendarDaysIcon className="h-5 w-5 text-accent"/>Fermentation et Notes</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="p-4 sm:p-6 space-y-4">
             {recipe.fermentationStartDate && (
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Début de Fermentation Prévu</h3>
-                <p className="text-lg">{format(parseISO(recipe.fermentationStartDate), "PPP", { locale: fr })}</p>
+                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">Début de Fermentation Prévu</h3>
+                <p className="text-md sm:text-lg">{format(parseISO(recipe.fermentationStartDate), "PPP", { locale: fr })}</p>
               </div>
             )}
             {recipe.notes && (
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Notes Additionnelles</h3>
-                <p className="text-base whitespace-pre-wrap">{recipe.notes}</p>
+                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">Notes Additionnelles</h3>
+                <p className="text-base whitespace-pre-wrap bg-muted/30 p-3 sm:p-4 rounded-md font-sans">{recipe.notes}</p>
               </div>
             )}
             {!recipe.fermentationStartDate && !recipe.notes && <p className="text-muted-foreground">Aucune information de fermentation ou note additionnelle.</p>}

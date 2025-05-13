@@ -1,9 +1,10 @@
+
 "use client";
 import type { Recipe } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { BeerIcon, Trash2Icon } from 'lucide-react';
+import { BeerIcon, Trash2Icon, EyeIcon } from 'lucide-react';
 import { useRecipeStore } from '@/lib/store';
 import {
   AlertDialog,
@@ -15,8 +16,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import React from 'react';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -38,28 +40,38 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
     });
   };
 
+  // This outer click handler for the card is for navigation.
+  // We need to stop propagation from buttons inside it.
+  const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // If the click target is a button or inside a button, don't navigate.
+    // This is a more robust way than relying on individual button stopPropagation
+    // for elements that might be nested deeper.
+    if ((e.target as HTMLElement).closest('button')) {
+      e.preventDefault();
+    }
+  };
+
   return (
     <Link href={`/recipes/${recipe.id}`} passHref legacyBehavior>
-      <a className="block hover:no-underline">
-        <Card className="w-full shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col h-full">
-          <CardHeader>
+      <a className="block hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg" onClick={handleCardClick}>
+        <Card className="w-full shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col h-full rounded-lg overflow-hidden">
+          <CardHeader className="pb-3">
             <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
-                  <BeerIcon className="h-6 w-6" />
-                  {recipe.name}
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-xl sm:text-2xl font-bold text-primary flex items-center gap-2 truncate">
+                  <BeerIcon className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+                  <span className="truncate" title={recipe.name}>{recipe.name}</span>
                 </CardTitle>
-                <CardDescription className="text-muted-foreground">{recipe.style}</CardDescription>
+                <CardDescription className="text-muted-foreground text-xs sm:text-sm truncate" title={recipe.style}>{recipe.style}</CardDescription>
               </div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="text-destructive hover:bg-destructive/10" 
+                    className="text-destructive hover:bg-destructive/10 shrink-0 ml-2" 
                     onClick={(e) => {
-                      // Prevent Link navigation when clicking the trigger for the dialog.
-                      e.stopPropagation();
+                      e.stopPropagation(); // Critical: prevent link navigation
                       e.preventDefault();
                     }}
                     aria-label="Supprimer la recette"
@@ -69,41 +81,44 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
                 </AlertDialogTrigger>
                 <AlertDialogContent 
                   onClick={(e) => {
-                    // Prevent Link navigation if clicking on the dialog overlay.
-                    e.stopPropagation();
-                    e.preventDefault();
+                     e.stopPropagation(); // Prevent link navigation if clicking on the dialog overlay.
+                     e.preventDefault();
                   }}
                 >
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Êtes-vous sûr?</AlertDialogTitle>
+                    <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer cette recette ?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Cette action ne peut pas être annulée. Cela supprimera définitivement votre recette.
+                      Cette action est irréversible. La recette "{recipe.name}" sera définitivement supprimée.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Annuler</AlertDialogCancel>
+                    <AlertDialogCancel onClick={(e) => {e.stopPropagation(); e.preventDefault();}}>Annuler</AlertDialogCancel>
                     <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Supprimer</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             </div>
           </CardHeader>
-          <CardContent className="flex-grow">
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <p><strong>Volume:</strong> {recipe.volume} L</p>
-              {recipe.initialGravity && <p><strong>DI:</strong> {recipe.initialGravity.toFixed(3)}</p>}
-              {recipe.finalGravity && <p><strong>DF:</strong> {recipe.finalGravity.toFixed(3)}</p>}
-              {recipe.alcoholABV && <p><strong>ABV:</strong> {recipe.alcoholABV.toFixed(1)}%</p>}
-              {recipe.bitternessIBU && <p><strong>IBU:</strong> {recipe.bitternessIBU}</p>}
-              {recipe.colorEBC && <p><strong>EBC:</strong> {recipe.colorEBC}</p>}
+          <CardContent className="flex-grow pt-2 pb-4 px-4 sm:px-5">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:text-sm">
+              <div><strong>Volume:</strong> {recipe.volume} L</div>
+              {recipe.initialGravity && <div><strong>DI:</strong> {recipe.initialGravity.toFixed(3)}</div>}
+              {recipe.finalGravity && <div><strong>DF:</strong> {recipe.finalGravity.toFixed(3)}</div>}
+              {recipe.alcoholABV && <div><strong>ABV:</strong> {recipe.alcoholABV.toFixed(1)}%</div>}
+              {recipe.bitternessIBU && <div><strong>IBU:</strong> {recipe.bitternessIBU}</div>}
+              {recipe.colorEBC && <div><strong>EBC:</strong> {recipe.colorEBC}</div>}
             </div>
-            {recipe.notes && <p className="mt-2 text-sm italic text-muted-foreground line-clamp-2">Notes: {recipe.notes}</p>}
+            {recipe.notes && <p className="mt-2 text-xs sm:text-sm italic text-muted-foreground line-clamp-2">Notes: {recipe.notes}</p>}
           </CardContent>
-          <CardFooter>
-            {/* Footer can be used for quick actions or tags in the future */}
+          <CardFooter className="p-3 sm:p-4 border-t bg-muted/30">
+             <Button variant="outline" size="sm" className="w-full text-accent hover:text-accent-foreground hover:bg-accent/20">
+                <EyeIcon className="mr-2 h-4 w-4" />
+                Voir les détails
+            </Button>
           </CardFooter>
         </Card>
       </a>
     </Link>
   );
 }
+
