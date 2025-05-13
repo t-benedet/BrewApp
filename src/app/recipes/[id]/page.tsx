@@ -144,11 +144,11 @@ export default function RecipeDetailPage() {
                 <TableRow>
                   <TableHead className="px-4 py-3 sm:px-6">Nom</TableHead>
                   <TableHead className="text-right px-4 py-3 sm:px-6 hidden sm:table-cell">Poids (g)</TableHead>
-                  <TableHead className="px-4 py-3 sm:px-6">Info</TableHead>
+                  <TableHead className="text-right px-4 py-3 sm:px-6">Info</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recipe.hops.map((hop: Hop) => (<TableRow key={hop.id}><TableCell className="px-4 py-3 sm:px-6 font-medium">{hop.name}</TableCell><TableCell className="text-right px-4 py-3 sm:px-6 hidden sm:table-cell">{hop.weight.toLocaleString()}</TableCell><TableCell className="px-4 py-3 sm:px-6"><div className="sm:hidden text-xs text-muted-foreground">{hop.weight.toLocaleString()}g</div>{hop.format} ({hop.alphaAcid ? hop.alphaAcid.toFixed(1) : 'N/A'}% AA)</TableCell></TableRow>))}
+                {recipe.hops.map((hop: Hop) => (<TableRow key={hop.id}><TableCell className="px-4 py-3 sm:px-6 font-medium">{hop.name}</TableCell><TableCell className="text-right px-4 py-3 sm:px-6 hidden sm:table-cell">{hop.weight.toLocaleString()}</TableCell><TableCell className="text-right px-4 py-3 sm:px-6"><div className="sm:hidden text-xs text-muted-foreground text-right">{hop.weight.toLocaleString()}g</div>{hop.format} ({hop.alphaAcid ? hop.alphaAcid.toFixed(1) : 'N/A'}% AA)</TableCell></TableRow>))}
               </TableBody>
             </Table>
           </CardContent>
@@ -168,7 +168,7 @@ export default function RecipeDetailPage() {
                 <TableRow>
                   <TableHead className="px-4 py-3 sm:px-6">Nom</TableHead>
                   <TableHead className="text-right px-4 py-3 sm:px-6 hidden sm:table-cell">Poids (g)</TableHead>
-                  <TableHead className="px-4 py-3 sm:px-6">Description/Type</TableHead>
+                  <TableHead className="text-right px-4 py-3 sm:px-6">Description/Type</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -176,8 +176,8 @@ export default function RecipeDetailPage() {
                   <TableRow key={ingredient.id}>
                     <TableCell className="px-4 py-3 sm:px-6 font-medium">{ingredient.name}</TableCell>
                     <TableCell className="text-right px-4 py-3 sm:px-6 hidden sm:table-cell">{ingredient.weight.toLocaleString()}</TableCell>
-                    <TableCell className="px-4 py-3 sm:px-6">
-                      <div className="sm:hidden text-xs text-muted-foreground">{ingredient.weight.toLocaleString()}g</div>
+                    <TableCell className="text-right px-4 py-3 sm:px-6">
+                      <div className="sm:hidden text-xs text-muted-foreground text-right">{ingredient.weight.toLocaleString()}g</div>
                       {ingredient.description || 'N/A'}
                     </TableCell>
                   </TableRow>
