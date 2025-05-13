@@ -8,6 +8,7 @@ import { PlusCircleIcon, FilterIcon, BeerIcon, EyeIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Recipe } from '@/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card } from '@/components/ui/card'; // Added Card import
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
