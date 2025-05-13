@@ -36,12 +36,12 @@ const recipeSchema = z.object({
   grains: z.array(z.object({
     id: z.string(),
     name: z.string().min(1, "Nom requis"),
-    weight: z.number().min(1, "Poids requis (g)"),
+    weight: z.number().min(0, "Le poids doit être positif ou nul (g)"),
   })).min(1, "Au moins une céréale/sucre est requis."),
   hops: z.array(z.object({
     id: z.string(),
     name: z.string().min(1, "Nom requis"),
-    weight: z.number().min(1, "Poids requis (g)"),
+    weight: z.number().min(0, "Le poids doit être positif ou nul (g)"),
     format: z.enum(['Pellets', 'Cones', 'Extract', 'Other']),
     alphaAcid: z.number().min(0).max(100, "% AA invalide"),
   })).min(1, "Au moins un houblon est requis."),
@@ -49,7 +49,7 @@ const recipeSchema = z.object({
     id: z.string(),
     name: z.string().min(1, "Nom de levure requis"),
     type: z.enum(['Ale', 'Lager', 'Wild', 'Other']),
-    weight: z.number().min(0, "Poids/Qté requis"),
+    weight: z.number().min(0, "Le poids doit être positif ou nul (g)"),
   })),
   fermentationStartDate: z.optional(z.string().nullable()),
   notes: z.optional(z.string().nullable()),

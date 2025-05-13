@@ -36,12 +36,12 @@ const recipeSchema = z.object({
   grains: z.array(z.object({
     id: z.string(),
     name: z.string().min(1, "Nom requis"),
-    weight: z.number().min(1, "Poids requis (g)"),
+    weight: z.number().min(0, "Le poids doit être positif ou nul (g)"),
   })).min(1, "Au moins une céréale/sucre est requis."),
   hops: z.array(z.object({
     id: z.string(),
     name: z.string().min(1, "Nom requis"),
-    weight: z.number().min(1, "Poids requis (g)"),
+    weight: z.number().min(0, "Le poids doit être positif ou nul (g)"),
     format: z.enum(['Pellets', 'Cones', 'Extract', 'Other']),
     alphaAcid: z.number().min(0).max(100, "% AA invalide"),
   })).min(1, "Au moins un houblon est requis."),
@@ -49,7 +49,7 @@ const recipeSchema = z.object({
     id: z.string(),
     name: z.string().min(1, "Nom de levure requis"),
     type: z.enum(['Ale', 'Lager', 'Wild', 'Other']),
-    weight: z.number().min(0, "Poids/Qté requis"),
+    weight: z.number().min(0, "Le poids doit être positif ou nul (g)"),
   }).refine(data => !!data.name || (!data.name && !data.type && (data.weight === 0 || data.weight === undefined || data.weight === null)), { // if name is empty, all other fields must be "empty" too
     message: "Veuillez compléter tous les champs de la levure ou les laisser vides.", 
     path: ['name'] // This will show error on yeast name, can be adjusted
