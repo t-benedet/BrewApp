@@ -17,8 +17,6 @@ import {
 } from '@/components/ui/sidebar';
 import { NotebookIcon, SparklesIcon, WrenchIcon, BeerIcon } from 'lucide-react';
 import { Toaster } from "@/components/ui/toaster";
-// Removed useClient import as the top-level check is removed.
-// The Sidebar component itself uses useClient internally.
 
 interface NavItem {
   href: string;
@@ -35,21 +33,13 @@ const navItems: NavItem[] = [
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  // Removed: const isClient = useClient();
-
-  // Removed the `if (!isClient)` block that rendered a skeleton.
-  // The Sidebar component will handle its own initial rendering (as null)
-  // on the server and initial client pass, then render fully on the client after hydration.
 
   return (
     <SidebarProvider defaultOpen>
       <Sidebar collapsible="icon">
         <SidebarRail /> 
-        <SidebarHeader className="p-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-1 text-lg font-semibold text-sidebar-foreground hover:text-sidebar-primary transition-colors">
-            <BeerIcon className="h-7 w-7 text-sidebar-primary group-data-[collapsible=icon]:hidden" />
-            <span className="group-data-[collapsible=icon]:hidden">BrewMate</span>
-          </Link>
+        <SidebarHeader className="p-4 flex items-center group-data-[collapsible=icon]:justify-center justify-end">
+          {/* Application name and icon removed from here */}
           <SidebarTrigger className="hidden md:flex" />
         </SidebarHeader>
         <SidebarContent>
@@ -75,15 +65,30 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:justify-end">
-          <div className="flex items-center gap-2 md:hidden">
-             <SidebarTrigger />
-             <BeerIcon className="h-6 w-6 text-primary" />
-             <span className="font-semibold">BrewMate</span>
+        <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm">
+          {/* Left: Mobile Sidebar Trigger */}
+          <div className="flex-none md:hidden">
+             <SidebarTrigger /> {/* This is a Button size="icon" className="h-7 w-7" */}
           </div>
-          <div className="hidden md:flex items-center gap-2">
-            {/* Desktop header items, e.g., user menu */}
+          
+          {/* Center: App Name & Icon */}
+          <div className="flex-grow flex justify-center items-center">
+            <Link href="/" className="flex items-center gap-2 text-xl font-semibold text-primary">
+              <BeerIcon className="h-7 w-7" />
+              <span>BrewMate</span>
+            </Link>
           </div>
+
+          {/* Right: Spacer for mobile to balance the trigger. */}
+          <div className="flex-none md:hidden" style={{ width: '1.75rem' }}> 
+            {/* This invisible spacer helps center the title on mobile. Width matches SidebarTrigger (h-7 w-7). */}
+          </div>
+           {/* Placeholder for future desktop items on the right, e.g., User Menu. 
+              If items are added here, ensure the layout remains balanced for centering the title.
+          <div className="flex-none hidden md:flex justify-end items-center">
+             Desktop specific items 
+          </div>
+          */}
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
           {children}
