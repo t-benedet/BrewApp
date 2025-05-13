@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -117,12 +116,7 @@ export default function RecipeDetailPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recipe.grains.map((grain: Grain) => (
-                  <TableRow key={grain.id}>
-                    <TableCell className="px-4 py-3 sm:px-6 font-medium">{grain.name}</TableCell>
-                    <TableCell className="text-right px-4 py-3 sm:px-6">{grain.weight.toLocaleString()}</TableCell>
-                  </TableRow>
-                ))}
+                {recipe.grains.map((grain: Grain) => (<TableRow key={grain.id}><TableCell className="px-4 py-3 sm:px-6 font-medium">{grain.name}</TableCell><TableCell className="text-right px-4 py-3 sm:px-6">{grain.weight.toLocaleString()}</TableCell></TableRow>))}
               </TableBody>
             </Table>
           </CardContent>
@@ -140,20 +134,11 @@ export default function RecipeDetailPage() {
                 <TableRow>
                   <TableHead className="px-4 py-3 sm:px-6">Nom</TableHead>
                   <TableHead className="text-right px-4 py-3 sm:px-6 hidden sm:table-cell">Poids (g)</TableHead>
-                  <TableHead className="px-4 py-3 sm:px-6">Info</TableHead> {/* Combined for mobile */}
+                  <TableHead className="px-4 py-3 sm:px-6">Info</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recipe.hops.map((hop: Hop) => (
-                  <TableRow key={hop.id}>
-                    <TableCell className="px-4 py-3 sm:px-6 font-medium">{hop.name}</TableCell>
-                    <TableCell className="text-right px-4 py-3 sm:px-6 hidden sm:table-cell">{hop.weight.toLocaleString()}</TableCell>
-                    <TableCell className="px-4 py-3 sm:px-6">
-                        <div className="sm:hidden text-xs text-muted-foreground">{hop.weight.toLocaleString()}g</div>
-                        {hop.format} ({hop.alphaAcid ? hop.alphaAcid.toFixed(1) : 'N/A'}% AA)
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {recipe.hops.map((hop: Hop) => (<TableRow key={hop.id}><TableCell className="px-4 py-3 sm:px-6 font-medium">{hop.name}</TableCell><TableCell className="text-right px-4 py-3 sm:px-6 hidden sm:table-cell">{hop.weight.toLocaleString()}</TableCell><TableCell className="px-4 py-3 sm:px-6"><div className="sm:hidden text-xs text-muted-foreground">{hop.weight.toLocaleString()}g</div>{hop.format} ({hop.alphaAcid ? hop.alphaAcid.toFixed(1) : 'N/A'}% AA)</TableCell></TableRow>))}
               </TableBody>
             </Table>
           </CardContent>
@@ -222,4 +207,3 @@ export default function RecipeDetailPage() {
     </div>
   );
 }
-

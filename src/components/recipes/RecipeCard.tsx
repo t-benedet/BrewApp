@@ -1,4 +1,3 @@
-
 "use client";
 import type { Recipe } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -28,10 +27,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
   const deleteRecipe = useRecipeStore((state) => state.deleteRecipe);
   const { toast } = useToast();
 
-  const handleDelete = (e: React.MouseEvent) => {
-    // Stop propagation to prevent the Link navigation or other unwanted parent handlers.
-    e.stopPropagation();
-    e.preventDefault(); 
+  const handleDelete = () => {
     deleteRecipe(recipe.id);
     toast({
       title: "Recette supprimée",
@@ -40,13 +36,10 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
     });
   };
 
-  // This outer click handler for the card is for navigation.
-  // We need to stop propagation from buttons inside it.
   const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    // If the click target is a button or inside a button, don't navigate.
-    // This is a more robust way than relying on individual button stopPropagation
-    // for elements that might be nested deeper.
-    if ((e.target as HTMLElement).closest('button')) {
+    const targetElement = e.target as HTMLElement;
+    // If the clicked element or its parent has 'data-noclick-navigate', prevent link navigation
+    if (targetElement.closest('[data-noclick-navigate="true"]')) {
       e.preventDefault();
     }
   };
@@ -67,24 +60,16 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
+                    data-noclick-navigate="true"
                     variant="ghost" 
                     size="icon" 
-                    className="text-destructive hover:bg-destructive/10 shrink-0 ml-2" 
-                    onClick={(e) => {
-                      e.stopPropagation(); // Critical: prevent link navigation
-                      e.preventDefault();
-                    }}
+                    className="text-destructive hover:bg-destructive/10 shrink-0 ml-2"
                     aria-label="Supprimer la recette"
                   >
                     <Trash2Icon className="h-4 w-4" />
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent 
-                  onClick={(e) => {
-                     e.stopPropagation(); // Prevent link navigation if clicking on the dialog overlay.
-                     e.preventDefault();
-                  }}
-                >
+                <AlertDialogContent data-noclick-navigate="true">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer cette recette ?</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -92,8 +77,8 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel onClick={(e) => {e.stopPropagation(); e.preventDefault();}}>Annuler</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Supprimer</AlertDialogAction>
+                    <AlertDialogCancel data-noclick-navigate="true">Annuler</AlertDialogCancel>
+                    <AlertDialogAction data-noclick-navigate="true" onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Supprimer</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
@@ -111,6 +96,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
             {recipe.notes && <p className="mt-2 text-xs sm:text-sm italic text-muted-foreground line-clamp-2">Notes: {recipe.notes}</p>}
           </CardContent>
           <CardFooter className="p-3 sm:p-4 border-t bg-muted/30">
+             {/* This button should allow navigation via the parent Link, so no data-noclick-navigate */}
              <Button variant="outline" size="sm" className="w-full text-accent hover:text-accent-foreground hover:bg-accent/20">
                 <EyeIcon className="mr-2 h-4 w-4" />
                 Voir les détails
@@ -121,4 +107,3 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
     </Link>
   );
 }
-
