@@ -17,7 +17,7 @@ import {
   SidebarRail, // Import SidebarRail
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { NotebookIcon, SparklesIcon, WrenchIcon, BeerIcon, SettingsIcon, PanelLeft } from 'lucide-react';
+import { NotebookIcon, SparklesIcon, WrenchIcon, BeerIcon, SettingsIcon } from 'lucide-react'; // Removed PanelLeft, SidebarTrigger handles its icon
 import { Toaster } from "@/components/ui/toaster";
 
 interface NavItem {
@@ -38,15 +38,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen>
-      <Sidebar collapsible="icon"> {/* Or "offcanvas" if full hide is preferred. "icon" keeps icons visible. */}
-        <SidebarRail /> {/* Add rail for edge toggling on desktop */}
+      <Sidebar collapsible="icon">
+        <SidebarRail /> 
         <SidebarHeader className="p-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-sidebar-foreground hover:text-sidebar-primary transition-colors">
-            <BeerIcon className="h-7 w-7 text-sidebar-primary" />
-            <span className="group-data-[collapsible=icon]:hidden">BrewMate</span>
-          </Link>
-          {/* SidebarTrigger for collapsing to icons on desktop, if collapsible="icon" */}
-           <SidebarTrigger className="hidden md:flex group-data-[collapsible=offcanvas]:hidden" />
+          <div className="flex items-center gap-2"> {/* Wrapper for logo and name */}
+            <Link href="/" className="flex items-center gap-1 text-lg font-semibold text-sidebar-foreground hover:text-sidebar-primary transition-colors">
+              <BeerIcon className="h-7 w-7 text-sidebar-primary" />
+              <span className="group-data-[collapsible=icon]:hidden">BrewMate</span>
+            </Link>
+          </div>
+          {/* Desktop Sidebar Toggle Button, to the right of the header items */}
+          <SidebarTrigger className="hidden md:flex" />
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>

@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { GrainFields, HopFields, YeastFields } from '@/components/recipes/RecipeFormFields';
+import { GrainFields, HopFields, YeastFields, AdditionalIngredientsFields } from '@/components/recipes/RecipeFormFields';
 import { BeerMugDisplay } from '@/components/recipes/BeerMugDisplay';
 import { BeerIcon, CalendarIcon, SaveIcon, InfoIcon, StickyNoteIcon, CalendarDaysIcon } from 'lucide-react';
 import { format, parseISO, isValid } from 'date-fns';
@@ -54,6 +54,12 @@ const recipeSchema = z.object({
     message: "Veuillez compléter tous les champs de la levure ou les laisser vides.", 
     path: ['name'] 
   })),
+  additionalIngredients: z.array(z.object({
+    id: z.string(),
+    name: z.string().min(1, "Nom requis"),
+    weight: z.number().min(0, "Le poids doit être positif ou nul (g)"),
+    description: z.string().optional(),
+  })).optional(),
   fermentationStartDate: z.optional(z.string().nullable()),
   bottlingDate: z.optional(z.string().nullable()),
   conditioningStartDate: z.optional(z.string().nullable()),
@@ -87,6 +93,7 @@ export default function NewRecipePage() {
       grains: [{ id: crypto.randomUUID(), name: '', weight: 0 }],
       hops: [{ id: crypto.randomUUID(), name: '', weight: 0, format: 'Pellets', alphaAcid: 0 }],
       yeast: defaultYeast,
+      additionalIngredients: [],
       fermentationStartDate: null,
       bottlingDate: null,
       conditioningStartDate: null,
@@ -106,10 +113,17 @@ export default function NewRecipePage() {
     name: "hops",
   });
 
+  const { fields: additionalIngredientFields, append: appendAdditionalIngredient, remove: removeAdditionalIngredient } = useFieldArray({
+    control: form.control,
+    name: "additionalIngredients",
+  });
+
+
   function onSubmit(data: RecipeFormData) {
     const recipeDataForStore: Omit<Recipe, 'id' | 'createdAt'> = {
       ...data,
       yeast: data.yeast?.name ? { ...data.yeast, id: data.yeast.id || crypto.randomUUID() } : undefined,
+      additionalIngredients: data.additionalIngredients || [],
       initialGravity: data.initialGravity === null ? undefined : data.initialGravity,
       finalGravity: data.finalGravity === null ? undefined : data.finalGravity,
       colorEBC: data.colorEBC === null ? undefined : data.colorEBC,
@@ -271,6 +285,7 @@ export default function NewRecipePage() {
             
             <GrainFields control={form.control} name="grains" fields={grainFields} append={appendGrain} remove={removeGrain} errors={form.formState.errors} />
             <HopFields control={form.control} name="hops" fields={hopFields} append={appendHop} remove={removeHop} errors={form.formState.errors} />
+            <AdditionalIngredientsFields control={form.control} name="additionalIngredients" fields={additionalIngredientFields} append={appendAdditionalIngredient} remove={removeAdditionalIngredient} errors={form.formState.errors} />
             <YeastFields control={form.control} errors={form.formState.errors} />
 
             <Card className="shadow-md">
@@ -327,4 +342,3 @@ export default function NewRecipePage() {
     </Form>
   );
 }
-

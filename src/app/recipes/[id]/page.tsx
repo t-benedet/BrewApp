@@ -4,12 +4,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useRecipeStore } from '@/lib/store';
-import type { Recipe, Grain, Hop } from '@/types'; 
+import type { Recipe, Grain, Hop, AdditionalIngredient } from '@/types'; 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { ArrowLeftIcon, BeerIcon, CalendarDaysIcon, EditIcon, InfoIcon, LayersIcon, HopIcon, WheatIcon, StickyNoteIcon } from 'lucide-react';
+import { ArrowLeftIcon, BeerIcon, CalendarDaysIcon, EditIcon, InfoIcon, AtomIcon, HopIcon, WheatIcon, StickyNoteIcon, SpicesIcon } from 'lucide-react'; // Changed LayersIcon to AtomIcon, Added SpicesIcon
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -155,10 +155,43 @@ export default function RecipeDetailPage() {
         </Card>
       )}
 
+      {recipe.additionalIngredients && recipe.additionalIngredients.length > 0 && (
+        <Card className="shadow-md rounded-lg">
+          <CardHeader className="p-4 sm:p-6 border-b">
+            <CardTitle className="text-lg sm:text-xl flex items-center gap-2 font-semibold">
+              <SpicesIcon className="h-5 w-5 text-accent"/>Ingrédients Supplémentaires
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 sm:p-2">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="px-4 py-3 sm:px-6">Nom</TableHead>
+                  <TableHead className="text-right px-4 py-3 sm:px-6 hidden sm:table-cell">Poids (g)</TableHead>
+                  <TableHead className="px-4 py-3 sm:px-6">Description/Type</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recipe.additionalIngredients.map((ingredient: AdditionalIngredient) => (
+                  <TableRow key={ingredient.id}>
+                    <TableCell className="px-4 py-3 sm:px-6 font-medium">{ingredient.name}</TableCell>
+                    <TableCell className="text-right px-4 py-3 sm:px-6 hidden sm:table-cell">{ingredient.weight.toLocaleString()}</TableCell>
+                    <TableCell className="px-4 py-3 sm:px-6">
+                      <div className="sm:hidden text-xs text-muted-foreground">{ingredient.weight.toLocaleString()}g</div>
+                      {ingredient.description || 'N/A'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
       {recipe.yeast && recipe.yeast.name && (
         <Card className="shadow-md rounded-lg">
           <CardHeader className="p-4 sm:p-6 border-b">
-            <CardTitle className="text-lg sm:text-xl flex items-center gap-2 font-semibold"><LayersIcon className="h-5 w-5 text-accent"/>Levure</CardTitle>
+            <CardTitle className="text-lg sm:text-xl flex items-center gap-2 font-semibold"><AtomIcon className="h-5 w-5 text-accent"/>Levure</CardTitle>
           </CardHeader>
           <CardContent className="p-0 sm:p-2">
             <Table>

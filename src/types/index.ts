@@ -20,6 +20,13 @@ export interface Yeast extends Ingredient {
   // flocculation?: 'Low' | 'Medium' | 'High';
 }
 
+export interface AdditionalIngredient {
+  id: string;
+  name: string;
+  weight: number; // in grams
+  description?: string; // e.g., "zest", "fruit", "spice type" or general notes
+}
+
 export interface Recipe {
   id: string;
   name: string;
@@ -33,6 +40,7 @@ export interface Recipe {
   grains: Grain[];
   hops: Hop[];
   yeast?: Yeast; // Make yeast optional or provide a default structure
+  additionalIngredients?: AdditionalIngredient[]; // New field for additional ingredients
   fermentationStartDate?: string; // ISO date string
   bottlingDate?: string; // ISO date string
   conditioningStartDate?: string; // ISO date string

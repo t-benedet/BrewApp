@@ -1,19 +1,21 @@
+
 "use client";
 
 import type { Control, FieldErrors, UseFieldArrayAppend, UseFieldArrayRemove } from "react-hook-form";
-import type { Recipe, HopFormat, YeastType } from "@/types";
+import type { Recipe, HopFormat, YeastType, AdditionalIngredient } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 // import { Label } from "@/components/ui/label"; // Not directly used, FormLabel is used
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2Icon, PlusCircleIcon, WheatIcon, HopIcon, LayersIcon } from "lucide-react";
+import { Trash2Icon, PlusCircleIcon, WheatIcon, HopIcon, AtomIcon, SpicesIcon } from "lucide-react"; // Changed LayersIcon to AtomIcon, Added SpicesIcon
 import { FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
 
 
 interface FieldArrayProps<TField extends { id: string }> {
   control: Control<Recipe>;
-  name: `grains` | `hops`; // Extend this if Yeast becomes an array
+  name: `grains` | `hops` | `additionalIngredients`; 
   fields: TField[];
   append: UseFieldArrayAppend<Recipe, any>;
   remove: UseFieldArrayRemove;
@@ -55,7 +57,7 @@ function DynamicFieldArray<TField extends { id: string }>({
                 size="icon"
                 className="absolute top-2 right-2 text-destructive hover:bg-destructive/10"
                 onClick={() => remove(index)}
-                aria-label={`Supprimer ${name === 'grains' ? 'céréale' : 'houblon'}`}
+                aria-label={`Supprimer ${name === 'grains' ? 'céréale' : name === 'hops' ? 'houblon' : 'ingrédient'}`}
               >
                 <Trash2Icon className="h-4 w-4" />
               </Button>
@@ -66,7 +68,7 @@ function DynamicFieldArray<TField extends { id: string }>({
           type="button"
           variant="outline"
           className="mt-4"
-          onClick={() => append({ id: crypto.randomUUID(), name: '', weight: 0, ...(name === 'hops' && { format: 'Pellets', alphaAcid: 0 }) })}
+          onClick={() => append({ id: crypto.randomUUID(), name: '', weight: 0, ...(name === 'hops' && { format: 'Pellets', alphaAcid: 0 }), ...(name === 'additionalIngredients' && { description: '' }) })}
         >
           <PlusCircleIcon className="mr-2 h-4 w-4" /> {addItemText}
         </Button>
@@ -191,6 +193,59 @@ export const HopFields: React.FC<Omit<FieldArrayProps<Recipe['hops'][number]>, '
   />
 );
 
+export const AdditionalIngredientsFields: React.FC<Omit<FieldArrayProps<AdditionalIngredient>, 'renderFields' | 'title' | 'addItemText' | 'icon'>> = (props) => (
+  <DynamicFieldArray
+    {...props}
+    name="additionalIngredients" // Make sure this name matches the one in your form schema
+    title="Ingrédients Supplémentaires"
+    addItemText="Ajouter Ingrédient"
+    icon={SpicesIcon}
+    renderFields={(field, index, control, errors) => (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <FormField
+          control={control}
+          name={`additionalIngredients.${index}.name`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nom</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Ex: Écorces d'orange" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name={`additionalIngredients.${index}.weight`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Poids (g)</FormLabel>
+              <FormControl>
+                <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} placeholder="Ex: 15" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name={`additionalIngredients.${index}.description`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description / Type</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Ex: Sèches, Zest" value={field.value ?? ''} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    )}
+  />
+);
+
 
 const yeastTypes: YeastType[] = ['Ale', 'Lager', 'Wild', 'Other'];
 
@@ -198,7 +253,7 @@ export const YeastFields: React.FC<{ control: Control<Recipe>, errors: FieldErro
   <Card className="shadow-md">
     <CardHeader>
       <CardTitle className="text-xl flex items-center gap-2">
-        <LayersIcon className="h-5 w-5 text-accent" />
+        <AtomIcon className="h-5 w-5 text-accent" /> {/* Changed Icon */}
         Levure
       </CardTitle>
     </CardHeader>
@@ -259,4 +314,3 @@ export const YeastFields: React.FC<{ control: Control<Recipe>, errors: FieldErro
     </CardContent>
   </Card>
 );
-
