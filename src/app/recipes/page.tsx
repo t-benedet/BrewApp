@@ -4,31 +4,51 @@
 import { Button } from '@/components/ui/button';
 import { useRecipeStore } from '@/lib/store';
 import Link from 'next/link';
-import { PlusCircleIcon, FilterIcon, BeerIcon, EyeIcon } from 'lucide-react';
+import { PlusCircleIcon, FilterIcon, BeerIcon, EyeIcon, Trash2Icon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Recipe } from '@/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-// Removed Card import as it's no longer used to wrap the table
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export default function MyRecipesPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const storeRecipes = useRecipeStore((state) => state.recipes);
+  const deleteRecipeFromStore = useRecipeStore((state) => state.deleteRecipe);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Sort recipes by creation date, newest first
     const sortedRecipes = [...storeRecipes].sort((a, b) => {
       if (a.createdAt && b.createdAt) {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       }
-      if (a.createdAt) return -1; // a comes first if b has no date
-      if (b.createdAt) return 1;  // b comes first if a has no date
+      if (a.createdAt) return -1;
+      if (b.createdAt) return 1;
       return 0;
     });
     setRecipes(sortedRecipes);
   }, [storeRecipes]);
 
+  const handleDeleteRecipe = (recipeId: string, recipeName: string) => {
+    deleteRecipeFromStore(recipeId);
+    toast({
+      title: "Recette supprimée",
+      description: `La recette "${recipeName}" a été supprimée.`,
+      variant: "destructive",
+    });
+  };
 
   return (
     <div className="container mx-auto py-6 sm:py-8">
@@ -49,7 +69,7 @@ export default function MyRecipesPage() {
       </div>
 
       {recipes.length === 0 ? (
-        <div className="text-center py-10 border-2 border-dashed border-muted rounded-lg bg-card"> {/* Added bg-card for consistency with form cards, or could be bg-background */}
+        <div className="text-center py-10 border-2 border-dashed border-muted rounded-lg bg-card">
           <BeerIcon className="mx-auto h-16 w-16 text-muted-foreground opacity-50 mb-4" />
           <p className="text-lg sm:text-xl text-muted-foreground font-semibold">Aucune recette pour le moment.</p>
           <p className="text-sm sm:text-base text-muted-foreground">Commencez par en créer une nouvelle ou explorez les recettes IA !</p>
@@ -61,17 +81,15 @@ export default function MyRecipesPage() {
           </Button>
         </div>
       ) : (
-        // Removed Card component that was wrapping the Table. The table will now use the page background.
-        // The Table component itself does not have a border or a default background that would make it look like a card.
-        // The div with overflow-auto for the table is part of the Table component from shadcn
-        <div className="overflow-hidden rounded-lg border border-border shadow-sm"> {/* Optional: Re-add border and shadow if a subtle container is desired, or remove this div entirely */}
+        <div className="overflow-hidden rounded-lg border border-border shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px] sm:w-[80px] text-center">Voir</TableHead>
                 <TableHead>Nom de la recette</TableHead>
                 <TableHead className="hidden sm:table-cell">Style</TableHead>
-                <TableHead className="text-right">Date d'ajout</TableHead>
+                <TableHead className="hidden md:table-cell text-right">Date d'ajout</TableHead>
+                <TableHead className="w-[50px] sm:w-[80px] text-center">Supprimer</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -87,10 +105,39 @@ export default function MyRecipesPage() {
                   <TableCell className="font-medium">
                     {recipe.name}
                     <div className="sm:hidden text-xs text-muted-foreground">{recipe.style}</div>
+                    <div className="md:hidden text-xs text-muted-foreground">
+                       {recipe.createdAt ? format(parseISO(recipe.createdAt), "dd MMM yy", { locale: fr }) : 'N/A'}
+                    </div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">{recipe.style}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="hidden md:table-cell text-right">
                     {recipe.createdAt ? format(parseISO(recipe.createdAt), "dd MMM yyyy", { locale: fr }) : 'Date inconnue'}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" aria-label="Supprimer la recette">
+                          <Trash2Icon className="h-5 w-5 text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer cette recette ?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Cette action est irréversible. La recette "{recipe.name}" sera définitivement supprimée.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Annuler</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteRecipe(recipe.id, recipe.name)}
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                          >
+                            Supprimer
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </TableCell>
                 </TableRow>
               ))}
@@ -101,4 +148,3 @@ export default function MyRecipesPage() {
     </div>
   );
 }
-

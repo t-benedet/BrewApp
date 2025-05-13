@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { ArrowLeftIcon, BeerIcon, CalendarDaysIcon, EditIcon, InfoIcon, AtomIcon, HopIcon, WheatIcon, StickyNoteIcon, BlendIcon } from 'lucide-react'; // Changed SpicesIcon to BlendIcon
+import { ArrowLeftIcon, BeerIcon, CalendarDaysIcon, EditIcon, InfoIcon, AtomIcon, HopIcon, WheatIcon, StickyNoteIcon, BlendIcon } from 'lucide-react';
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -257,3 +257,4 @@ export default function RecipeDetailPage() {
   );
 }
 
+```

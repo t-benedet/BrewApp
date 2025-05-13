@@ -48,9 +48,9 @@ const GenerateBeerRecipeOutputSchema = z.object({
   grains: z.array(AiGrainSchema).describe("List of grains and fermentable sugars with their names and weights in grams."),
   hops: z.array(AiHopSchema).describe("List of hops with name, weight in grams, format (Pellets, Cones, Extract, Other), and alpha acid percentage."),
   yeast: AiYeastSchema.describe("Details of the yeast including name, type (Ale, Lager, Wild, Other), and weight/amount in grams or units."),
-  additionalIngredients: z.array(AiAdditionalIngredientSchema).optional().describe("List of any additional ingredients like spices, fruits, or finings, with name, weight (grams or units), and optional description."),
+  additionalIngredients: z.array(AiAdditionalIngredientSchema).optional().describe("List of any additional ingredients like spices, fruits, or finings, with name, weight (grams or units), and optional description. Ensure any ingredient that is not a grain, hop, or yeast is listed here."),
 
-  instructions: z.string().describe('Step-by-step brewing instructions. This should NOT include the ingredient list again if they are provided in structured format above.'),
+  instructions: z.string().describe('Step-by-step brewing instructions, formatted as a markdown numbered or bulleted list. Each step should be a separate list item. This should NOT include the ingredient list again if they are provided in structured format above.'),
   originalGravity: z.string().describe('The original gravity of the beer (e.g., "1.050").'),
   finalGravity: z.string().describe('The final gravity of the beer (e.g., "1.010").'),
   color: z.string().describe('The color of the beer in EBC (e.g., "12").'),
@@ -70,6 +70,7 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert beer recipe generator. Analyze the user's request below and generate a detailed beer recipe.
 If the user specifies a style, use that. If not, infer a suitable style.
 If specific ingredients or equipment are mentioned, try to incorporate them. If equipment is not mentioned, assume standard homebrewing equipment.
+Any brewing ingredients that are not standard grains/malts, hops, or yeast (e.g., spices, fruits, finings, water salts) should be listed in the 'additionalIngredients' field.
 
 User Query: {{{userQuery}}}
 
@@ -79,10 +80,10 @@ Ensure the recipe includes a recipe name, the detected beer style, structured li
 - For grains, provide 'name' (string) and 'weight' (number, in grams).
 - For hops, provide 'name' (string), 'weight' (number, in grams), 'format' (enum: 'Pellets', 'Cones', 'Extract', 'Other'), and 'alphaAcid' (number, e.g., 12.5 for 12.5% AA).
 - For yeast, provide 'name' (string), 'type' (enum: 'Ale', 'Lager', 'Wild', 'Other'), and 'weight' (number, in grams or units like '1' for 1 pack).
-- For additionalIngredients (optional), provide 'name' (string), 'weight' (number, in grams or units), and 'description' (string, optional, e.g. "for clarity at 15 min boil").
+- For additionalIngredients (optional), provide 'name' (string), 'weight' (number, in grams or units), and 'description' (string, optional, e.g. "for clarity at 15 min boil"). Ensure items like spices, fruits, lactose, or brewing salts are placed here.
 
 The recipe name should be creative and reflect the style and key characteristics.
-The instructions should be clear, concise, and easy to follow for a homebrewer. DO NOT repeat the full ingredient list within the instructions if they are already provided in the structured fields (grains, hops, yeast, additionalIngredients). You can refer to them generally (e.g., "Add bittering hops").
+The instructions should be clear, concise, and easy to follow for a homebrewer, formatted as a markdown numbered or bulleted list. Each step should be a separate list item (e.g., "1. Heat 20L of water to 70°C." or "- Add bittering hops at 60 minutes."). DO NOT repeat the full ingredient list within the instructions if they are already provided in the structured fields (grains, hops, yeast, additionalIngredients). You can refer to them generally.
 Provide numerical values for OG, FG, EBC, IBU, and ABV as strings in the specified formats.
 `,
 });
@@ -102,3 +103,4 @@ const generateBeerRecipeFlow = ai.defineFlow(
   }
 );
 
+```
