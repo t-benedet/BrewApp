@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -19,7 +18,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { useClient } from "@/hooks/use-client"; // Added useClient hook
+import { useClient } from "@/hooks/use-client"; 
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -71,6 +70,8 @@ const SidebarProvider = React.forwardRef<
   ) => {
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
+    const isClient = useClient();
+
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
@@ -133,6 +134,31 @@ const SidebarProvider = React.forwardRef<
       }),
       [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
     )
+    
+    if (!isClient) {
+      // Render a simplified structure or null on the server and initial client render
+      // to avoid hydration mismatch due to isMobile.
+      // The structure here should match what AppLayout renders conditionally for !isClient.
+      return (
+        <div
+         style={
+              {
+                "--sidebar-width": SIDEBAR_WIDTH,
+                "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+                ...style,
+              } as React.CSSProperties
+            }
+            className={cn(
+              "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
+              className
+            )}
+             ref={ref}
+            {...props}
+        >
+            {children}
+        </div>);
+    }
+
 
     return (
       <SidebarContext.Provider value={contextValue}>
@@ -184,8 +210,9 @@ const Sidebar = React.forwardRef<
     const isClient = useClient();
 
     if (!isClient) {
-      // Render null on the server and initial client render to avoid hydration mismatch
-      // This ensures that any structure dependent on `isMobile` is only rendered after client mount
+      // Render null on the server for components that depend heavily on client-side logic like `isMobile`
+      // to prevent hydration issues.
+      // The AppLayout will render a skeleton for this part.
       return null;
     }
 
@@ -535,7 +562,7 @@ const SidebarMenuItem = React.forwardRef<
   <li
     ref={ref}
     data-sidebar="menu-item"
-    className={cn("group/menu-item relative", className)}
+    className={cn("group/menu-item relative group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center", className)}
     {...props}
   >
     {children}
@@ -581,7 +608,7 @@ const SidebarMenuButton = React.forwardRef<
       size = "default",
       tooltip,
       className,
-      children, // Ensure children is destructured
+      children, 
       ...props
     },
     ref
@@ -589,7 +616,7 @@ const SidebarMenuButton = React.forwardRef<
     const Comp = asChild ? Slot : "button"
     const { isMobile, state } = useSidebar()
 
-    const buttonElement = ( // Renamed to avoid conflict with tooltip variable if tooltip was a string
+    const buttonElement = ( 
       <Comp
         ref={ref}
         data-sidebar="menu-button"
@@ -812,3 +839,4 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+
