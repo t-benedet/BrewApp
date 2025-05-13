@@ -84,7 +84,9 @@ const SidebarProvider = React.forwardRef<
         }
 
         // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        if (typeof document !== 'undefined') {
+          document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        }
       },
       [setOpenProp, open]
     )
@@ -92,8 +94,8 @@ const SidebarProvider = React.forwardRef<
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
       return isMobile
-        ? setOpenMobile((open) => !open)
-        : setOpen((open) => !open)
+        ? setOpenMobile((currentOpen) => !currentOpen)
+        : setOpen((currentOpen) => !currentOpen)
     }, [isMobile, setOpen, setOpenMobile])
 
     // Adds a keyboard shortcut to toggle the sidebar.
@@ -107,9 +109,10 @@ const SidebarProvider = React.forwardRef<
           toggleSidebar()
         }
       }
-
-      window.addEventListener("keydown", handleKeyDown)
-      return () => window.removeEventListener("keydown", handleKeyDown)
+      if (typeof window !== 'undefined') {
+        window.addEventListener("keydown", handleKeyDown)
+        return () => window.removeEventListener("keydown", handleKeyDown)
+      }
     }, [toggleSidebar])
 
     // We add a state so that we can do data-state="expanded" or "collapsed".
@@ -290,16 +293,7 @@ const SidebarRail = React.forwardRef<
   React.ComponentProps<"button">
 >(({ className, ...props }, ref) => {
   const { toggleSidebar } = useSidebar();
-  const [hasMounted, setHasMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setHasMounted(true);
-  }, []);
-
-  if (!hasMounted) {
-    return null;
-  }
-
+ 
   return (
     <button
       ref={ref}
@@ -365,16 +359,6 @@ const SidebarHeader = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div">
 >(({ className, children, ...props }, ref) => {
-  const [hasMounted, setHasMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setHasMounted(true);
-  }, []);
-
-  if (!hasMounted) {
-    return null; 
-  }
-
   return (
     <div
       ref={ref}
@@ -491,7 +475,7 @@ const SidebarGroupAction = React.forwardRef<
       ref={ref}
       data-sidebar="group-action"
       className={cn(
-        "absolute right-3 top-3.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-sidebar-foreground outline-none ring-sidebar-ring transition-transform hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
+        "absolute right-3 top-3.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-sidebar-foreground outline-none ring-sidebar-ring transition-transform hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 peer-hover/menu-button:text-sidebar-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0",
         // Increases the hit area of the button on mobile.
         "after:absolute after:-inset-2 after:md:hidden",
         "group-data-[collapsible=icon]:hidden",
