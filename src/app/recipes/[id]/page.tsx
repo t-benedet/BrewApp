@@ -4,12 +4,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useRecipeStore } from '@/lib/store';
-import type { Recipe, Grain, Hop, Yeast } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import type { Recipe, Grain, Hop } from '@/types'; // Removed Yeast as it's singular in Recipe
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Removed CardDescription
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { ArrowLeftIcon, BeerIcon, CalendarDaysIcon, EditIcon, InfoIcon, ThermometerIcon, LayersIcon, HopIcon, WheatIcon } from 'lucide-react';
+import { ArrowLeftIcon, BeerIcon, CalendarDaysIcon, EditIcon, InfoIcon, LayersIcon, HopIcon, WheatIcon } from 'lucide-react';
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -25,20 +25,14 @@ export default function RecipeDetailPage() {
   useEffect(() => {
     if (recipeId) {
       const foundRecipe = getRecipeById(recipeId);
-      if (foundRecipe) {
-        setRecipe(foundRecipe);
-      } else {
-        // Optionally redirect or show a not found message
-        // For now, let's assume recipe will be found or handle UI below
-      }
+      setRecipe(foundRecipe || null); // Set to null if not found
     }
   }, [recipeId, getRecipeById]);
 
   if (!recipe) {
     return (
       <div className="container mx-auto py-8 text-center">
-        <p className="text-xl text-muted-foreground">Chargement de la recette...</p>
-        {/* Or a skeleton loader */}
+        <p className="text-xl text-muted-foreground">Recette non trouvée ou en cours de chargement...</p>
       </div>
     );
   }
@@ -48,18 +42,26 @@ export default function RecipeDetailPage() {
       <div className="mb-2">
         <div className="flex justify-between text-sm mb-1">
           <span>{label} ({value.toFixed(toFixedValue)} {unit})</span>
-          <span className="text-muted-foreground">{((value / max) * 100).toFixed(0)}%</span>
+          <span className="text-muted-foreground">{max > 0 ? ((value / max) * 100).toFixed(0) : 0}%</span>
         </div>
-        <Progress value={(value / max) * 100} className="h-2" />
+        <Progress value={max > 0 ? (value / max) * 100 : 0} className="h-2" />
       </div>
     )
   );
 
   return (
     <div className="container mx-auto py-8 space-y-6">
-      <Button variant="outline" onClick={() => router.back()} className="mb-4">
-        <ArrowLeftIcon className="mr-2 h-4 w-4" /> Retour
-      </Button>
+      <div className="flex justify-between items-center">
+        <Button variant="outline" onClick={() => router.back()} className="mb-4">
+          <ArrowLeftIcon className="mr-2 h-4 w-4" /> Retour
+        </Button>
+        <Button variant="outline" asChild>
+          <Link href={`/recipes/edit/${recipe.id}`}>
+            <EditIcon className="mr-2 h-4 w-4" /> Modifier
+          </Link>
+        </Button>
+      </div>
+
 
       {/* Beer Name */}
       <Card className="shadow-lg">
@@ -68,12 +70,6 @@ export default function RecipeDetailPage() {
             <BeerIcon className="h-8 w-8" />
             {recipe.name}
           </CardTitle>
-          {/* Placeholder for Edit Button - Future Feature */}
-          {/* <Button variant="outline" size="icon" asChild>
-            <Link href={`/recipes/edit/${recipe.id}`}>
-              <EditIcon className="h-5 w-5" />
-            </Link>
-          </Button> */}
         </CardHeader>
       </Card>
 
@@ -98,8 +94,8 @@ export default function RecipeDetailPage() {
           <div>
             {statDisplay("Densité Initiale", recipe.initialGravity, "SG", 1.150, 3)}
             {statDisplay("Densité Finale", recipe.finalGravity, "SG", 1.050, 3)}
-            {statDisplay("Couleur", recipe.colorEBC, "EBC", 100)}
-            {statDisplay("Amertume", recipe.bitternessIBU, "IBU", 120)}
+            {statDisplay("Couleur", recipe.colorEBC, "EBC", 100, 0)}
+            {statDisplay("Amertume", recipe.bitternessIBU, "IBU", 120, 0)}
             {statDisplay("Alcool", recipe.alcoholABV, "% alc./vol.", 20, 1)}
           </div>
         </CardContent>
@@ -154,7 +150,7 @@ export default function RecipeDetailPage() {
                     <TableCell>{hop.name}</TableCell>
                     <TableCell className="text-right">{hop.weight.toLocaleString()}</TableCell>
                     <TableCell>{hop.format}</TableCell>
-                    <TableCell className="text-right">{hop.alphaAcid.toFixed(1)}%</TableCell>
+                    <TableCell className="text-right">{hop.alphaAcid ? hop.alphaAcid.toFixed(1) : 'N/A'}%</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -194,7 +190,7 @@ export default function RecipeDetailPage() {
       {recipe.instructions && (
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2">Instructions de Brassage (IA)</CardTitle>
+            <CardTitle className="text-xl flex items-center gap-2">Instructions de Brassage</CardTitle>
           </CardHeader>
           <CardContent>
             <pre className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-md">{recipe.instructions}</pre>
@@ -228,3 +224,4 @@ export default function RecipeDetailPage() {
     </div>
   );
 }
+

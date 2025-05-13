@@ -6,10 +6,9 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import type { Recipe } from '@/types';
 import { useRecipeStore } from '@/lib/store';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-// import { Label } from '@/components/ui/label'; // Not directly used
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -19,10 +18,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { GrainFields, HopFields, YeastFields } from '@/components/recipes/RecipeFormFields';
 import { BeerMugDisplay } from '@/components/recipes/BeerMugDisplay';
-import { BeerIcon, CalendarIcon, SaveIcon, InfoIcon } from 'lucide-react';
+import { BeerIcon, CalendarIcon, SaveIcon, ArrowLeftIcon, InfoIcon } from 'lucide-react';
 import { format, parseISO, isValid } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from 'react';
 
 const recipeSchema = z.object({
   name: z.string().min(1, "Le nom de la bière est requis."),
@@ -50,25 +50,23 @@ const recipeSchema = z.object({
     name: z.string().min(1, "Nom de levure requis"),
     type: z.enum(['Ale', 'Lager', 'Wild', 'Other']),
     weight: z.number().min(0, "Poids/Qté requis"),
-  }).refine(data => !!data.name || (!data.name && !data.type && (data.weight === 0 || data.weight === undefined || data.weight === null)), { // if name is empty, all other fields must be "empty" too
-    message: "Veuillez compléter tous les champs de la levure ou les laisser vides.", 
-    path: ['name'] // This will show error on yeast name, can be adjusted
   })),
   fermentationStartDate: z.optional(z.string().nullable()),
   notes: z.optional(z.string().nullable()),
-  instructions: z.optional(z.string().nullable()),
+  instructions: z.optional(z.string().nullable()), // Keep AI instructions if they exist
 });
 
 type RecipeFormData = z.infer<typeof recipeSchema>;
 
-// Default values for yeast need an ID
 const defaultYeast = { id: crypto.randomUUID(), name: '', type: 'Ale' as const, weight: 0 };
 
-
-export default function NewRecipePage() {
-  const addRecipe = useRecipeStore((state) => state.addRecipe);
+export default function EditRecipePage() {
+  const { updateRecipe, getRecipeById } = useRecipeStore();
   const router = useRouter();
+  const params = useParams();
+  const recipeId = params.id as string;
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
 
   const form = useForm<RecipeFormData>({
     resolver: zodResolver(recipeSchema),
@@ -90,21 +88,48 @@ export default function NewRecipePage() {
     },
   });
 
-  const { fields: grainFields, append: appendGrain, remove: removeGrain } = useFieldArray({
-    control: form.control,
-    name: "grains",
-  });
+  useEffect(() => {
+    if (recipeId) {
+      const existingRecipe = getRecipeById(recipeId);
+      if (existingRecipe) {
+        form.reset({
+          ...existingRecipe,
+          // Ensure optional number fields that might be undefined are explicitly null for the form
+          initialGravity: existingRecipe.initialGravity ?? null,
+          finalGravity: existingRecipe.finalGravity ?? null,
+          colorEBC: existingRecipe.colorEBC ?? null,
+          bitternessIBU: existingRecipe.bitternessIBU ?? null,
+          alcoholABV: existingRecipe.alcoholABV ?? null,
+          fermentationStartDate: existingRecipe.fermentationStartDate ?? null,
+          notes: existingRecipe.notes ?? '',
+          instructions: existingRecipe.instructions ?? '',
+          yeast: existingRecipe.yeast || defaultYeast, // Ensure yeast has a default structure if not present
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Recette non trouvée.",
+          variant: "destructive",
+        });
+        router.push('/recipes');
+      }
+      setIsLoading(false);
+    }
+  }, [recipeId, getRecipeById, form, router, toast]);
 
+  const { fields: grainFields, append: appendGrain, remove: removeGrain } = useFieldArray({
+    control: form.control, name: "grains",
+  });
   const { fields: hopFields, append: appendHop, remove: removeHop } = useFieldArray({
-    control: form.control,
-    name: "hops",
+    control: form.control, name: "hops",
   });
 
   function onSubmit(data: RecipeFormData) {
-    const newRecipe: Recipe = {
-      id: crypto.randomUUID(),
+    const recipeToUpdate: Recipe = {
+      id: recipeId, // Critical: use existing ID
       ...data,
       yeast: data.yeast?.name ? { ...data.yeast, id: data.yeast.id || crypto.randomUUID() } : undefined,
+      // Ensure nullable fields are correctly handled
       initialGravity: data.initialGravity === null ? undefined : data.initialGravity,
       finalGravity: data.finalGravity === null ? undefined : data.finalGravity,
       colorEBC: data.colorEBC === null ? undefined : data.colorEBC,
@@ -114,32 +139,39 @@ export default function NewRecipePage() {
       notes: data.notes === null ? undefined : data.notes,
       instructions: data.instructions === null ? undefined : data.instructions,
     };
-    addRecipe(newRecipe);
+    updateRecipe(recipeToUpdate);
     toast({
-      title: "Recette enregistrée!",
-      description: `La recette "${newRecipe.name}" a été ajoutée.`,
+      title: "Recette modifiée!",
+      description: `La recette "${recipeToUpdate.name}" a été mise à jour.`,
     });
-    router.push('/recipes');
+    router.push(`/recipes/${recipeId}`);
   }
   
   const watchColorEBC = form.watch('colorEBC');
 
+  if (isLoading) {
+    return <div className="container mx-auto py-8 text-center">Chargement de la recette pour modification...</div>;
+  }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <h1 className="text-3xl font-bold text-primary mb-8">Nouvelle recette</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-primary">Modifier la recette</h1>
+          <Button variant="outline" onClick={() => router.back()}>
+            <ArrowLeftIcon className="mr-2 h-4 w-4" /> Annuler
+          </Button>
+        </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column: Stats Panel */}
           <Card className="lg:col-span-1 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
                 <BeerIcon className="h-6 w-6 text-primary" />
                 Statistiques
               </CardTitle>
-              <CardDescription>Valeurs cibles pour votre recette.</CardDescription>
-              <BeerMugDisplay ebcColor={watchColorEBC} />
+              <CardDescription>Valeurs cibles de votre recette.</CardDescription>
+               <BeerMugDisplay ebcColor={watchColorEBC ?? undefined} />
             </CardHeader>
             <CardContent className="space-y-6">
               {[
@@ -162,7 +194,7 @@ export default function NewRecipePage() {
                           <Input 
                             type="number" 
                             step={stat.step || 1}
-                            placeholder={`Ex: ${stat.field.includes('Gravity') ? '1.050' : (stat.max / 2)}`}
+                            placeholder={`Ex: ${stat.max / 2}`}
                             {...restField}
                             value={value === null || value === undefined ? '' : String(value)} // Handle null for input
                             onChange={e => onChange(e.target.value === '' ? null : parseFloat(e.target.value))}
@@ -178,49 +210,24 @@ export default function NewRecipePage() {
             </CardContent>
           </Card>
 
-          {/* Right Column: Recipe Details */}
           <div className="lg:col-span-2 space-y-6">
             <Card className="shadow-md">
-              <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-2"><InfoIcon className="h-5 w-5 text-accent" /> Informations de base</CardTitle>
-              </CardHeader>
+                <CardHeader>
+                    <CardTitle className="text-xl flex items-center gap-2"><InfoIcon className="h-5 w-5 text-accent" /> Informations de base</CardTitle>
+                </CardHeader>
               <CardContent className="pt-6 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nom de la bière</FormLabel>
-                        <FormControl><Input placeholder="Ex: Ma Super IPA" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="style"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Style de bière</FormLabel>
-                        <FormControl><Input placeholder="Ex: American IPA" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <FormField control={form.control} name="name" render={({ field }) => (
+                      <FormItem><FormLabel>Nom de la bière</FormLabel><FormControl><Input placeholder="Ex: Ma Super IPA" {...field} /></FormControl><FormMessage /></FormItem>
+                  )}/>
+                  <FormField control={form.control} name="style" render={({ field }) => (
+                      <FormItem><FormLabel>Style de bière</FormLabel><FormControl><Input placeholder="Ex: American IPA" {...field} /></FormControl><FormMessage /></FormItem>
+                  )}/>
                 </div>
                 <Separator />
-                <FormField
-                  control={form.control}
-                  name="volume"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Volume (Litres)</FormLabel>
-                      <FormControl><Input type="number" placeholder="Ex: 20" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <FormField control={form.control} name="volume" render={({ field }) => (
+                    <FormItem><FormLabel>Volume (Litres)</FormLabel><FormControl><Input type="number" placeholder="Ex: 20" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} /></FormControl><FormMessage /></FormItem>
+                )}/>
               </CardContent>
             </Card>
             
@@ -231,68 +238,31 @@ export default function NewRecipePage() {
             <Card className="shadow-md">
               <CardHeader><CardTitle className="text-xl flex items-center gap-2"><CalendarIcon className="h-5 w-5 text-accent"/>Calendrier & Notes</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="fermentationStartDate"
-                  render={({ field }) => (
+                <FormField control={form.control} name="fermentationStartDate" render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Date de début de fermentation</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                            >
-                              {field.value && isValid(parseISO(field.value)) ? (
-                                format(parseISO(field.value), "PPP", { locale: fr })
-                              ) : (
-                                <span>Choisir une date</span>
-                              )}
+                            <Button variant={"outline"} className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}>
+                              {field.value && isValid(parseISO(field.value)) ? format(parseISO(field.value), "PPP", { locale: fr }) : <span>Choisir une date</span>}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value && isValid(parseISO(field.value)) ? parseISO(field.value) : undefined}
-                            onSelect={(date) => field.onChange(date?.toISOString())}
-                            locale={fr}
-                            initialFocus
-                          />
+                          <Calendar mode="single" selected={field.value && isValid(parseISO(field.value)) ? parseISO(field.value) : undefined} onSelect={(date) => field.onChange(date?.toISOString())} locale={fr} initialFocus />
                         </PopoverContent>
                       </Popover>
                       <FormMessage />
                     </FormItem>
-                  )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Notes additionnelles</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Notes sur le brassage, la fermentation, etc." {...field} value={field.value ?? ''}/>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                   <FormField
-                    control={form.control}
-                    name="instructions"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Instructions de brassage (si généré par IA)</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Instructions générées par IA ou manuelles" {...field} value={field.value ?? ''} rows={8}/>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                )}/>
+                 <FormField control={form.control} name="notes" render={({ field }) => (
+                      <FormItem><FormLabel>Notes additionnelles</FormLabel><FormControl><Textarea placeholder="Notes sur le brassage, la fermentation, etc." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
+                  )}/>
+                  <FormField control={form.control} name="instructions" render={({ field }) => (
+                      <FormItem><FormLabel>Instructions de brassage (si généré par IA)</FormLabel><FormControl><Textarea placeholder="Instructions de brassage..." {...field} value={field.value ?? ''} rows={8} /></FormControl><FormMessage /></FormItem>
+                  )}/>
               </CardContent>
             </Card>
           </div>
@@ -301,11 +271,10 @@ export default function NewRecipePage() {
         <div className="flex justify-end mt-8">
           <Button type="submit" size="lg">
             <SaveIcon className="mr-2 h-5 w-5" />
-            Enregistrer la recette
+            Sauvegarder les modifications
           </Button>
         </div>
       </form>
     </Form>
   );
 }
-

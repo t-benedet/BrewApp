@@ -14,9 +14,10 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarFooter,
+  SidebarRail, // Import SidebarRail
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { NotebookIcon, SparklesIcon, WrenchIcon, BeerIcon, SettingsIcon } from 'lucide-react';
+import { NotebookIcon, SparklesIcon, WrenchIcon, BeerIcon, SettingsIcon, PanelLeft } from 'lucide-react';
 import { Toaster } from "@/components/ui/toaster";
 
 interface NavItem {
@@ -37,12 +38,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen>
-      <Sidebar>
-        <SidebarHeader className="p-4">
+      <Sidebar collapsible="icon"> {/* Or "offcanvas" if full hide is preferred. "icon" keeps icons visible. */}
+        <SidebarRail /> {/* Add rail for edge toggling on desktop */}
+        <SidebarHeader className="p-4 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-sidebar-foreground hover:text-sidebar-primary transition-colors">
             <BeerIcon className="h-7 w-7 text-sidebar-primary" />
-            <span>BrewMate</span>
+            <span className="group-data-[collapsible=icon]:hidden">BrewMate</span>
           </Link>
+          {/* SidebarTrigger for collapsing to icons on desktop, if collapsible="icon" */}
+           <SidebarTrigger className="hidden md:flex group-data-[collapsible=offcanvas]:hidden" />
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
@@ -72,11 +76,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </Sidebar>
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:justify-end">
-          <div className="md:hidden">
+          <div className="flex items-center gap-2 md:hidden">
+             <SidebarTrigger /> {/* Trigger for mobile, always shows PanelLeft */}
              <BeerIcon className="h-6 w-6 text-primary" />
+             <span className="font-semibold">BrewMate</span>
           </div>
-          <SidebarTrigger className="md:hidden" />
-          {/* Add any header content here, like user menu */}
+          <div className="hidden md:flex items-center gap-2">
+            {/* Desktop header items, e.g., user menu */}
+          </div>
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
           {children}

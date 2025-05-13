@@ -4,10 +4,10 @@ import type { Control, FieldErrors, UseFieldArrayAppend, UseFieldArrayRemove } f
 import type { Recipe, HopFormat, YeastType } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+// import { Label } from "@/components/ui/label"; // Not directly used, FormLabel is used
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2Icon, PlusCircleIcon } from "lucide-react";
+import { Trash2Icon, PlusCircleIcon, WheatIcon, HopIcon, LayersIcon } from "lucide-react";
 import { FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 
 
@@ -21,6 +21,7 @@ interface FieldArrayProps<TField extends { id: string }> {
   renderFields: (field: TField, index: number, control: Control<Recipe>, errors: FieldErrors<Recipe>) => React.ReactNode;
   title: string;
   addItemText: string;
+  icon?: React.ElementType;
 }
 
 function DynamicFieldArray<TField extends { id: string }>({
@@ -33,11 +34,15 @@ function DynamicFieldArray<TField extends { id: string }>({
   renderFields,
   title,
   addItemText,
+  icon: IconComponent,
 }: FieldArrayProps<TField>) {
   return (
     <Card className="shadow-md">
       <CardHeader>
-        <CardTitle className="text-xl">{title}</CardTitle>
+        <CardTitle className="text-xl flex items-center gap-2">
+          {IconComponent && <IconComponent className="h-5 w-5 text-accent" />}
+          {title}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -50,6 +55,7 @@ function DynamicFieldArray<TField extends { id: string }>({
                 size="icon"
                 className="absolute top-2 right-2 text-destructive hover:bg-destructive/10"
                 onClick={() => remove(index)}
+                aria-label={`Supprimer ${name === 'grains' ? 'céréale' : 'houblon'}`}
               >
                 <Trash2Icon className="h-4 w-4" />
               </Button>
@@ -69,12 +75,13 @@ function DynamicFieldArray<TField extends { id: string }>({
   );
 }
 
-export const GrainFields: React.FC<Omit<FieldArrayProps<Recipe['grains'][number]>, 'renderFields' | 'title' | 'addItemText'>> = (props) => (
+export const GrainFields: React.FC<Omit<FieldArrayProps<Recipe['grains'][number]>, 'renderFields' | 'title' | 'addItemText' | 'icon'>> = (props) => (
   <DynamicFieldArray
     {...props}
     name="grains"
     title="Céréales et Sucres"
     addItemText="Ajouter Céréale/Sucre"
+    icon={WheatIcon}
     renderFields={(field, index, control, errors) => (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
@@ -111,12 +118,13 @@ export const GrainFields: React.FC<Omit<FieldArrayProps<Recipe['grains'][number]
 
 const hopFormats: HopFormat[] = ['Pellets', 'Cones', 'Extract', 'Other'];
 
-export const HopFields: React.FC<Omit<FieldArrayProps<Recipe['hops'][number]>, 'renderFields' | 'title' | 'addItemText'>> = (props) => (
+export const HopFields: React.FC<Omit<FieldArrayProps<Recipe['hops'][number]>, 'renderFields' | 'title' | 'addItemText' | 'icon'>> = (props) => (
   <DynamicFieldArray
     {...props}
     name="hops"
     title="Houblons"
     addItemText="Ajouter Houblon"
+    icon={HopIcon}
     renderFields={(field, index, control, errors) => (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <FormField
@@ -189,7 +197,10 @@ const yeastTypes: YeastType[] = ['Ale', 'Lager', 'Wild', 'Other'];
 export const YeastFields: React.FC<{ control: Control<Recipe>, errors: FieldErrors<Recipe> }> = ({ control, errors }) => (
   <Card className="shadow-md">
     <CardHeader>
-      <CardTitle className="text-xl">Levure</CardTitle>
+      <CardTitle className="text-xl flex items-center gap-2">
+        <LayersIcon className="h-5 w-5 text-accent" />
+        Levure
+      </CardTitle>
     </CardHeader>
     <CardContent>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -200,7 +211,7 @@ export const YeastFields: React.FC<{ control: Control<Recipe>, errors: FieldErro
             <FormItem>
               <FormLabel>Nom</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Ex: SafAle US-05" />
+                <Input {...field} placeholder="Ex: SafAle US-05" value={field.value ?? ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -233,13 +244,19 @@ export const YeastFields: React.FC<{ control: Control<Recipe>, errors: FieldErro
             <FormItem>
               <FormLabel>Poids (g) / Quantité</FormLabel>
               <FormControl>
-                <Input {...field} type="number" onChange={e => field.onChange(parseFloat(e.target.value) || 0)} placeholder="Ex: 11.5" />
+                <Input {...field} type="number" onChange={e => field.onChange(parseFloat(e.target.value) || 0)} placeholder="Ex: 11.5" value={field.value ?? ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
       </div>
+       {(errors.yeast && !errors.yeast.name && !errors.yeast.type && !errors.yeast.weight) && (
+            <FormMessage className="mt-2">
+                {typeof errors.yeast === 'string' ? errors.yeast : "Veuillez compléter les informations de la levure ou laisser tous les champs vides."}
+            </FormMessage>
+        )}
     </CardContent>
   </Card>
 );
+
