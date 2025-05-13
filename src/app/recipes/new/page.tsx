@@ -50,18 +50,18 @@ const recipeSchema = z.object({
     name: z.string().min(1, "Nom de levure requis"),
     type: z.enum(['Ale', 'Lager', 'Wild', 'Other']),
     weight: z.number().min(0, "Le poids doit être positif ou nul (g)"),
-  }).refine(data => !!data.name || (!data.name && !data.type && (data.weight === 0 || data.weight === undefined || data.weight === null)), { // if name is empty, all other fields must be "empty" too
+  }).refine(data => !!data.name || (!data.name && !data.type && (data.weight === 0 || data.weight === undefined || data.weight === null)), { 
     message: "Veuillez compléter tous les champs de la levure ou les laisser vides.", 
-    path: ['name'] // This will show error on yeast name, can be adjusted
+    path: ['name'] 
   })),
   fermentationStartDate: z.optional(z.string().nullable()),
   notes: z.optional(z.string().nullable()),
   instructions: z.optional(z.string().nullable()),
 });
 
-type RecipeFormData = z.infer<typeof recipeSchema>;
+type RecipeFormData = Omit<z.infer<typeof recipeSchema>, 'id' | 'createdAt'>;
 
-// Default values for yeast need an ID
+
 const defaultYeast = { id: crypto.randomUUID(), name: '', type: 'Ale' as const, weight: 0 };
 
 
@@ -70,7 +70,7 @@ export default function NewRecipePage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const form = useForm<RecipeFormData>({
+  const form = useForm<RecipeFormData>({ // Form data type does not include id or createdAt
     resolver: zodResolver(recipeSchema),
     defaultValues: {
       name: '',
@@ -101,8 +101,7 @@ export default function NewRecipePage() {
   });
 
   function onSubmit(data: RecipeFormData) {
-    const newRecipe: Recipe = {
-      id: crypto.randomUUID(),
+    const recipeDataForStore: Omit<Recipe, 'id' | 'createdAt'> = {
       ...data,
       yeast: data.yeast?.name ? { ...data.yeast, id: data.yeast.id || crypto.randomUUID() } : undefined,
       initialGravity: data.initialGravity === null ? undefined : data.initialGravity,
@@ -114,10 +113,10 @@ export default function NewRecipePage() {
       notes: data.notes === null ? undefined : data.notes,
       instructions: data.instructions === null ? undefined : data.instructions,
     };
-    addRecipe(newRecipe);
+    addRecipe(recipeDataForStore); // addRecipe in store now handles id and createdAt
     toast({
       title: "Recette enregistrée!",
-      description: `La recette "${newRecipe.name}" a été ajoutée.`,
+      description: `La recette "${data.name}" a été ajoutée.`,
     });
     router.push('/recipes');
   }
@@ -131,7 +130,6 @@ export default function NewRecipePage() {
         <h1 className="text-3xl font-bold text-primary mb-8">Nouvelle recette</h1>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column: Stats Panel */}
           <Card className="lg:col-span-1 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
@@ -164,7 +162,7 @@ export default function NewRecipePage() {
                             step={stat.step || 1}
                             placeholder={`Ex: ${stat.field.includes('Gravity') ? '1.050' : (stat.max / 2)}`}
                             {...restField}
-                            value={value === null || value === undefined ? '' : String(value)} // Handle null for input
+                            value={value === null || value === undefined ? '' : String(value)}
                             onChange={e => onChange(e.target.value === '' ? null : parseFloat(e.target.value))}
                           />
                         </FormControl>
@@ -178,7 +176,6 @@ export default function NewRecipePage() {
             </CardContent>
           </Card>
 
-          {/* Right Column: Recipe Details */}
           <div className="lg:col-span-2 space-y-6">
             <Card className="shadow-md">
               <CardHeader>

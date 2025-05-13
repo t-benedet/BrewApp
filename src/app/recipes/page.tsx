@@ -2,19 +2,30 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { RecipeCard } from '@/components/recipes/RecipeCard';
 import { useRecipeStore } from '@/lib/store';
 import Link from 'next/link';
-import { PlusCircleIcon, FilterIcon, BeerIcon } from 'lucide-react'; // Added BeerIcon
+import { PlusCircleIcon, FilterIcon, BeerIcon, EyeIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Recipe } from '@/types';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { format, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 export default function MyRecipesPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const storeRecipes = useRecipeStore((state) => state.recipes);
 
   useEffect(() => {
-    setRecipes(storeRecipes);
+    // Sort recipes by creation date, newest first
+    const sortedRecipes = [...storeRecipes].sort((a, b) => {
+      if (a.createdAt && b.createdAt) {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+      if (a.createdAt) return -1; // a comes first if b has no date
+      if (b.createdAt) return 1;  // b comes first if a has no date
+      return 0;
+    });
+    setRecipes(sortedRecipes);
   }, [storeRecipes]);
 
 
@@ -49,11 +60,39 @@ export default function MyRecipesPage() {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {recipes.map((recipe) => (
-            <RecipeCard key={recipe.id} recipe={recipe} />
-          ))}
-        </div>
+        <Card className="shadow-lg rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px] sm:w-[80px] text-center">Voir</TableHead>
+                <TableHead>Nom de la recette</TableHead>
+                <TableHead className="hidden sm:table-cell">Style</TableHead>
+                <TableHead className="text-right">Date d'ajout</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recipes.map((recipe) => (
+                <TableRow key={recipe.id}>
+                  <TableCell className="text-center">
+                    <Button asChild variant="ghost" size="icon" aria-label="Voir la recette">
+                      <Link href={`/recipes/${recipe.id}`}>
+                        <EyeIcon className="h-5 w-5 text-primary" />
+                      </Link>
+                    </Button>
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {recipe.name}
+                    <div className="sm:hidden text-xs text-muted-foreground">{recipe.style}</div>
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">{recipe.style}</TableCell>
+                  <TableCell className="text-right">
+                    {recipe.createdAt ? format(parseISO(recipe.createdAt), "dd MMM yyyy", { locale: fr }) : 'Date inconnue'}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
       )}
     </div>
   );

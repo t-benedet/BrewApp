@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -71,31 +72,28 @@ export default function AiRecipesPage() {
   const handleSaveRecipe = () => {
     if (!generatedRecipe) return;
 
-    // Approximation: Convert AI output to our Recipe structure
-    // This is a simplified conversion. More complex parsing might be needed.
-    const recipeToSave: Recipe = {
-      id: crypto.randomUUID(),
+    const recipeToSave: Omit<Recipe, 'id' | 'createdAt'> = { // Adjusted type for addRecipe
       name: generatedRecipe.recipeName,
-      style: form.getValues('style') || 'Style IA', // Get style from form or default
-      volume: 20, // Default volume, AI doesn't specify this
+      style: form.getValues('style') || 'Style IA',
+      volume: 20, 
       initialGravity: parseFloat(generatedRecipe.originalGravity) || undefined,
       finalGravity: parseFloat(generatedRecipe.finalGravity) || undefined,
       colorEBC: parseInt(generatedRecipe.color) || undefined,
       bitternessIBU: parseInt(generatedRecipe.bitterness) || undefined,
       alcoholABV: parseFloat(generatedRecipe.alcoholContent) || undefined,
-      grains: [], // AI output for ingredients is a string, needs parsing
-      hops: [],   // Same for hops
+      grains: [], 
+      hops: [],   
       // yeast: { name: 'Levure IA', type: 'Ale', weight: 1, id: crypto.randomUUID() }, // Placeholder
       notes: `Recette générée par IA. Style: ${form.getValues('style')}. Ingrédients: ${form.getValues('availableIngredients')}`,
       instructions: generatedRecipe.instructions,
     };
     
-    addRecipe(recipeToSave);
+    addRecipe(recipeToSave); // addRecipe now handles id and createdAt
     toast({
       title: "Recette IA sauvegardée!",
       description: `La recette "${recipeToSave.name}" a été ajoutée à "Mes recettes".`,
     });
-    setGeneratedRecipe(null); // Clear displayed recipe after saving
+    setGeneratedRecipe(null); 
   };
 
 

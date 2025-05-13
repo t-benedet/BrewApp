@@ -37,8 +37,10 @@ export interface Recipe {
   notes?: string;
   // For AI generated recipes
   instructions?: string; 
+  createdAt: string; // ISO date string for creation date
 }
 
 export interface EquipmentState {
   description: string;
 }
+

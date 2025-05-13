@@ -4,7 +4,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface RecipeState {
   recipes: Recipe[];
-  addRecipe: (recipe: Recipe) => void;
+  addRecipe: (recipe: Omit<Recipe, 'id' | 'createdAt'>) => void; // Input type adjusted
   updateRecipe: (recipe: Recipe) => void;
   deleteRecipe: (recipeId: string) => void;
   getRecipeById: (recipeId: string) => Recipe | undefined;
@@ -23,11 +23,18 @@ export const useRecipeStore = create<RecipeState>()(
   persist(
     (set, get) => ({
       recipes: [],
-      addRecipe: (recipe) => set((state) => ({ recipes: [...state.recipes, recipe] })),
+      addRecipe: (recipeData) => {
+        const newRecipe: Recipe = {
+          ...recipeData,
+          id: crypto.randomUUID(),
+          createdAt: new Date().toISOString(),
+        };
+        set((state) => ({ recipes: [...state.recipes, newRecipe] }));
+      },
       updateRecipe: (updatedRecipe) =>
         set((state) => ({
           recipes: state.recipes.map((recipe) =>
-            recipe.id === updatedRecipe.id ? updatedRecipe : recipe
+            recipe.id === updatedRecipe.id ? { ...recipe, ...updatedRecipe } : recipe // Ensure createdAt is preserved
           ),
         })),
       deleteRecipe: (recipeId) =>
@@ -55,3 +62,4 @@ export const useEquipmentStore = create<AppEquipmentState>()(
     }
   )
 );
+
