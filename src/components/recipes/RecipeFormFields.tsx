@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 // import { Label } from "@/components/ui/label"; // Not directly used, FormLabel is used
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2Icon, PlusCircleIcon, WheatIcon, HopIcon, AtomIcon, SpicesIcon } from "lucide-react"; // Changed LayersIcon to AtomIcon, Added SpicesIcon
+import { Trash2Icon, PlusCircleIcon, WheatIcon, HopIcon, AtomIcon, BlendIcon } from "lucide-react"; // Changed SpicesIcon to BlendIcon
 import { FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -199,7 +199,7 @@ export const AdditionalIngredientsFields: React.FC<Omit<FieldArrayProps<Addition
     name="additionalIngredients" // Make sure this name matches the one in your form schema
     title="Ingrédients Supplémentaires"
     addItemText="Ajouter Ingrédient"
-    icon={SpicesIcon}
+    icon={BlendIcon}
     renderFields={(field, index, control, errors) => (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <FormField
@@ -314,3 +314,4 @@ export const YeastFields: React.FC<{ control: Control<Recipe>, errors: FieldErro
     </CardContent>
   </Card>
 );
+
