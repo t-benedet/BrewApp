@@ -8,7 +8,7 @@ import { PlusCircleIcon, FilterIcon, BeerIcon, EyeIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Recipe } from '@/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card } from '@/components/ui/card'; // Added Card import
+// Removed Card import as it's no longer used to wrap the table
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -49,7 +49,7 @@ export default function MyRecipesPage() {
       </div>
 
       {recipes.length === 0 ? (
-        <div className="text-center py-10 border-2 border-dashed border-muted rounded-lg">
+        <div className="text-center py-10 border-2 border-dashed border-muted rounded-lg bg-card"> {/* Added bg-card for consistency with form cards, or could be bg-background */}
           <BeerIcon className="mx-auto h-16 w-16 text-muted-foreground opacity-50 mb-4" />
           <p className="text-lg sm:text-xl text-muted-foreground font-semibold">Aucune recette pour le moment.</p>
           <p className="text-sm sm:text-base text-muted-foreground">Commencez par en créer une nouvelle ou explorez les recettes IA !</p>
@@ -61,7 +61,10 @@ export default function MyRecipesPage() {
           </Button>
         </div>
       ) : (
-        <Card className="shadow-lg rounded-lg overflow-hidden">
+        // Removed Card component that was wrapping the Table. The table will now use the page background.
+        // The Table component itself does not have a border or a default background that would make it look like a card.
+        // The div with overflow-auto for the table is part of the Table component from shadcn
+        <div className="overflow-hidden rounded-lg border border-border shadow-sm"> {/* Optional: Re-add border and shadow if a subtle container is desired, or remove this div entirely */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -93,7 +96,7 @@ export default function MyRecipesPage() {
               ))}
             </TableBody>
           </Table>
-        </Card>
+        </div>
       )}
     </div>
   );
