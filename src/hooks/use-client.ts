@@ -8,7 +8,7 @@ export function useClient() {
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+  }, []); // Empty dependency array ensures this runs once on mount
 
   return isClient;
 }
