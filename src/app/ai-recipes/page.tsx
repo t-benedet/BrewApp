@@ -13,7 +13,7 @@ import { useState } from 'react';
 import { useRecipeStore } from '@/lib/store';
 import { Wand2Icon, SaveIcon } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import type { Recipe } from '@/types';
+import type { Recipe, Grain, Hop, Yeast, AdditionalIngredient } from '@/types';
 
 const aiRecipeFormSchema = z.object({
   userQuery: z.string().min(10, "Votre demande doit contenir au moins 10 caractères pour que l'IA puisse générer une recette pertinente."),
@@ -47,9 +47,15 @@ export default function AiRecipesPage() {
       });
     } catch (error) {
       console.error("Error generating AI recipe:", error);
+      let errorMessage = "Impossible de générer la recette IA. Veuillez réessayer ou reformuler votre demande.";
+      if (error instanceof Error) {
+        errorMessage = error.message.includes("output was invalid") 
+          ? "L'IA a retourné une réponse inattendue. Veuillez réessayer." 
+          : "Erreur de génération: " + error.message;
+      }
       toast({
         title: "Erreur de génération",
-        description: "Impossible de générer la recette IA. Veuillez réessayer ou reformuler votre demande.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -60,6 +66,26 @@ export default function AiRecipesPage() {
   const handleSaveRecipe = () => {
     if (!generatedRecipe) return;
 
+    const recipeGrains: Grain[] = (generatedRecipe.grains || []).map(grain => ({
+      ...grain,
+      id: crypto.randomUUID(),
+    }));
+
+    const recipeHops: Hop[] = (generatedRecipe.hops || []).map(hop => ({
+      ...hop,
+      id: crypto.randomUUID(),
+    }));
+    
+    const recipeYeast: Yeast | undefined = generatedRecipe.yeast ? {
+      ...generatedRecipe.yeast,
+      id: crypto.randomUUID(),
+    } : undefined;
+
+    const recipeAdditionalIngredients: AdditionalIngredient[] = (generatedRecipe.additionalIngredients || []).map(ingredient => ({
+      ...ingredient,
+      id: crypto.randomUUID(),
+    }));
+
     const recipeToSave: Omit<Recipe, 'id' | 'createdAt'> = {
       name: generatedRecipe.recipeName,
       style: generatedRecipe.detectedStyle || 'Style IA',
@@ -68,12 +94,15 @@ export default function AiRecipesPage() {
       finalGravity: parseFloat(generatedRecipe.finalGravity) || undefined,
       colorEBC: parseInt(generatedRecipe.color) || undefined,
       bitternessIBU: parseInt(generatedRecipe.bitterness) || undefined,
-      alcoholABV: parseFloat(generatedRecipe.alcoholContent) || undefined,
-      grains: [], // AI provides ingredients as a single string; manual parsing would be complex here.
-      hops: [],   // User can fill these in after saving if desired.
-      // yeast: { name: 'Levure IA', type: 'Ale', weight: 1, id: crypto.randomUUID() }, // Placeholder, or AI could specify
-      notes: `Recette générée par IA. Requête: "${form.getValues('userQuery')}". Style détecté: ${generatedRecipe.detectedStyle}. Les listes d'ingrédients (grains, houblons, levure) sont incluses dans les instructions et peuvent être détaillées manuellement.`,
-      instructions: `${generatedRecipe.ingredients}\n\n${generatedRecipe.instructions}`, // Combine AI ingredients & instructions
+      alcoholABV: parseFloat(generatedRecipe.alcoholContent.replace(/%[^0-9.]*$/, "")) || undefined,
+      
+      grains: recipeGrains,
+      hops: recipeHops,
+      yeast: recipeYeast,
+      additionalIngredients: recipeAdditionalIngredients,
+      
+      notes: `Recette générée par IA. Requête: "${form.getValues('userQuery')}". Style détecté: ${generatedRecipe.detectedStyle}.`,
+      instructions: generatedRecipe.instructions,
     };
     
     addRecipe(recipeToSave);
@@ -82,7 +111,7 @@ export default function AiRecipesPage() {
       description: `La recette "${recipeToSave.name}" a été ajoutée à "Mes recettes".`,
     });
     setGeneratedRecipe(null); 
-    form.reset(); // Optionally reset the form
+    form.reset(); 
   };
 
 
@@ -146,14 +175,14 @@ export default function AiRecipesPage() {
                 <li><strong>Alcool (% alc./vol):</strong> {generatedRecipe.alcoholContent}</li>
               </ul>
             </div>
+            {/* Removed the generic 'Ingrédients' textarea. Details will be seen after saving. */}
             <div>
-              <h3 className="font-semibold text-lg mb-1">Ingrédients:</h3>
-              <Textarea value={generatedRecipe.ingredients} readOnly rows={8} className="bg-muted/50 text-sm" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-lg mb-1">Instructions:</h3>
+              <h3 className="font-semibold text-lg mb-1">Instructions de brassage:</h3>
               <Textarea value={generatedRecipe.instructions} readOnly rows={12} className="bg-muted/50 text-sm" />
             </div>
+             <p className="text-sm text-muted-foreground italic">
+              Les listes détaillées des céréales, houblons, levure et ingrédients additionnels seront visibles dans &quot;Mes Recettes&quot; après sauvegarde.
+            </p>
           </CardContent>
           <CardFooter>
             <Button onClick={handleSaveRecipe}>
