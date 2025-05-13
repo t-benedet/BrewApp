@@ -1,3 +1,4 @@
+
 "use client";
 import type { ReactNode } from 'react';
 import Link from 'next/link';
@@ -34,28 +35,27 @@ const navItems: NavItem[] = [
   { href: '/equipment', label: 'Équipement', icon: WrenchIcon, tooltip: 'Gérer mon équipement' },
 ];
 
-function AppNameAndIcon() {
-  const { state: sidebarState } = useSidebar(); // Get sidebar state
-  const isClient = useClient();
+// AppNameAndIcon component is no longer used in the sidebar header
+// function AppNameAndIcon() {
+//   const { state: sidebarState } = useSidebar(); 
+//   const isClient = useClient();
 
-  if (!isClient) {
-    return ( // Skeleton or consistent server render
-      <div className="flex items-center gap-2 text-xl font-semibold text-primary">
-        <BeerIcon className="h-7 w-7" />
-        <span>BrewMate</span>
-      </div>
-    );
-  }
+//   if (!isClient) {
+//     return ( 
+//       <div className="flex items-center gap-2 text-xl font-semibold text-primary">
+//         <BeerIcon className="h-7 w-7" />
+//         <span>BrewMate</span>
+//       </div>
+//     );
+//   }
   
-  // group-data-[collapsible=icon]:hidden is on the span for the label.
-  // For the BeerIcon, we can use a similar approach based on sidebarState.
-  return (
-    <Link href="/" className="flex items-center gap-2 text-xl font-semibold text-primary">
-      {sidebarState === 'expanded' && <BeerIcon className="h-7 w-7 transition-opacity duration-300" />}
-      {sidebarState === 'expanded' && <span className="transition-opacity duration-300">BrewMate</span>}
-    </Link>
-  );
-}
+//   return (
+//     <Link href="/" className="flex items-center gap-2 text-xl font-semibold text-primary">
+//       {sidebarState === 'expanded' && <BeerIcon className="h-7 w-7 transition-opacity duration-300" />}
+//       {sidebarState === 'expanded' && <span className="transition-opacity duration-300">BrewMate</span>}
+//     </Link>
+//   );
+// }
 
 
 export function AppLayout({ children }: { children: ReactNode }) {
@@ -106,12 +106,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
     <SidebarProvider defaultOpen>
       <Sidebar collapsible="icon">
         <SidebarRail /> 
-        <SidebarHeader className="p-4 flex items-center group-data-[collapsible=icon]:justify-center justify-between">
-          {/* Conditionally render AppNameAndIcon only when expanded */}
-          <div className="group-data-[collapsible=icon]:hidden">
-            <AppNameAndIcon />
-          </div>
-          <SidebarTrigger className="hidden md:flex" />
+        <SidebarHeader className="p-4 flex items-center group-data-[collapsible=icon]:justify-center justify-end">
+          {/* Application name removed from here */}
+          <SidebarTrigger className="hidden md:flex group-data-[collapsible=icon]:mx-auto" />
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
@@ -159,4 +156,3 @@ export function AppLayout({ children }: { children: ReactNode }) {
     </SidebarProvider>
   );
 }
-
