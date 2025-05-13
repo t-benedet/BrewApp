@@ -34,6 +34,9 @@ export interface Recipe {
   hops: Hop[];
   yeast?: Yeast; // Make yeast optional or provide a default structure
   fermentationStartDate?: string; // ISO date string
+  bottlingDate?: string; // ISO date string
+  conditioningStartDate?: string; // ISO date string
+  tastingDate?: string; // ISO date string
   notes?: string;
   // For AI generated recipes
   instructions?: string; 

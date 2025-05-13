@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -8,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { ArrowLeftIcon, BeerIcon, CalendarDaysIcon, EditIcon, InfoIcon, LayersIcon, HopIcon, WheatIcon } from 'lucide-react';
+import { ArrowLeftIcon, BeerIcon, CalendarDaysIcon, EditIcon, InfoIcon, LayersIcon, HopIcon, WheatIcon, StickyNoteIcon } from 'lucide-react';
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -48,6 +49,15 @@ export default function RecipeDetailPage() {
           <span className="text-muted-foreground">{value.toFixed(toFixedValue)} {unit}</span>
         </div>
         <Progress value={max > 0 ? (value / max) * 100 : 0} className="h-2" aria-label={`${label}: ${value.toFixed(toFixedValue)} ${unit}, ${((value / max) * 100).toFixed(0)}%`} />
+      </div>
+    )
+  );
+  
+  const dateDisplay = (label: string, dateString?: string) => (
+    dateString && (
+      <div>
+        <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">{label}</h3>
+        <p className="text-md sm:text-lg">{format(parseISO(dateString), "PPP", { locale: fr })}</p>
       </div>
     )
   );
@@ -171,36 +181,42 @@ export default function RecipeDetailPage() {
         </Card>
       )}
       
-      {recipe.instructions && (
+      {(recipe.fermentationStartDate || recipe.bottlingDate || recipe.conditioningStartDate || recipe.tastingDate) && (
         <Card className="shadow-md rounded-lg">
           <CardHeader className="p-4 sm:p-6 border-b">
-            <CardTitle className="text-lg sm:text-xl flex items-center gap-2 font-semibold">Instructions de Brassage</CardTitle>
+            <CardTitle className="text-lg sm:text-xl flex items-center gap-2 font-semibold"><CalendarDaysIcon className="h-5 w-5 text-accent"/>Calendrier du Brassage</CardTitle>
           </CardHeader>
-          <CardContent className="p-4 sm:p-6">
-            <pre className="whitespace-pre-wrap text-sm bg-muted/30 p-3 sm:p-4 rounded-md font-sans">{recipe.instructions}</pre>
+          <CardContent className="p-4 sm:p-6 space-y-4">
+            {dateDisplay("Début de Fermentation Prévu", recipe.fermentationStartDate)}
+            {dateDisplay("Mise en Bouteille Prévue", recipe.bottlingDate)}
+            {dateDisplay("Début de Garde Prévu", recipe.conditioningStartDate)}
+            {dateDisplay("Dégustation Prévue", recipe.tastingDate)}
+            {!recipe.fermentationStartDate && !recipe.bottlingDate && !recipe.conditioningStartDate && !recipe.tastingDate && (
+                <p className="text-muted-foreground">Aucune date de brassage planifiée.</p>
+            )}
           </CardContent>
         </Card>
       )}
-
-      {(recipe.fermentationStartDate || recipe.notes) && (
+      
+      {(recipe.notes || recipe.instructions) && (
         <Card className="shadow-md rounded-lg">
           <CardHeader className="p-4 sm:p-6 border-b">
-            <CardTitle className="text-lg sm:text-xl flex items-center gap-2 font-semibold"><CalendarDaysIcon className="h-5 w-5 text-accent"/>Fermentation et Notes</CardTitle>
+            <CardTitle className="text-lg sm:text-xl flex items-center gap-2 font-semibold"><StickyNoteIcon className="h-5 w-5 text-accent"/>Notes & Instructions</CardTitle>
           </CardHeader>
           <CardContent className="p-4 sm:p-6 space-y-4">
-            {recipe.fermentationStartDate && (
-              <div>
-                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">Début de Fermentation Prévu</h3>
-                <p className="text-md sm:text-lg">{format(parseISO(recipe.fermentationStartDate), "PPP", { locale: fr })}</p>
-              </div>
-            )}
             {recipe.notes && (
               <div>
-                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">Notes Additionnelles</h3>
+                <h3 className="text-md sm:text-lg font-semibold mb-1">Notes Additionnelles</h3>
                 <p className="text-base whitespace-pre-wrap bg-muted/30 p-3 sm:p-4 rounded-md font-sans">{recipe.notes}</p>
               </div>
             )}
-            {!recipe.fermentationStartDate && !recipe.notes && <p className="text-muted-foreground">Aucune information de fermentation ou note additionnelle.</p>}
+            {recipe.instructions && (
+              <div>
+                <h3 className="text-md sm:text-lg font-semibold mb-1">Instructions de Brassage</h3>
+                <pre className="whitespace-pre-wrap text-sm bg-muted/30 p-3 sm:p-4 rounded-md font-sans">{recipe.instructions}</pre>
+              </div>
+            )}
+            {!recipe.notes && !recipe.instructions && <p className="text-muted-foreground">Aucune note ou instruction additionnelle.</p>}
           </CardContent>
         </Card>
       )}

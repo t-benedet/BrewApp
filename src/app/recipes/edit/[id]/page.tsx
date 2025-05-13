@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { GrainFields, HopFields, YeastFields } from '@/components/recipes/RecipeFormFields';
 import { BeerMugDisplay } from '@/components/recipes/BeerMugDisplay';
-import { BeerIcon, CalendarIcon, SaveIcon, ArrowLeftIcon, InfoIcon } from 'lucide-react';
+import { BeerIcon, CalendarIcon, SaveIcon, ArrowLeftIcon, InfoIcon, StickyNoteIcon, CalendarDaysIcon } from 'lucide-react';
 import { format, parseISO, isValid } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
@@ -52,6 +52,9 @@ const recipeSchema = z.object({
     weight: z.number().min(0, "Le poids doit être positif ou nul (g)"),
   })),
   fermentationStartDate: z.optional(z.string().nullable()),
+  bottlingDate: z.optional(z.string().nullable()),
+  conditioningStartDate: z.optional(z.string().nullable()),
+  tastingDate: z.optional(z.string().nullable()),
   notes: z.optional(z.string().nullable()),
   instructions: z.optional(z.string().nullable()), // Keep AI instructions if they exist
 });
@@ -83,6 +86,9 @@ export default function EditRecipePage() {
       hops: [{ id: crypto.randomUUID(), name: '', weight: 0, format: 'Pellets', alphaAcid: 0 }],
       yeast: defaultYeast,
       fermentationStartDate: null,
+      bottlingDate: null,
+      conditioningStartDate: null,
+      tastingDate: null,
       notes: '',
       instructions: '',
     },
@@ -94,16 +100,18 @@ export default function EditRecipePage() {
       if (existingRecipe) {
         form.reset({
           ...existingRecipe,
-          // Ensure optional number fields that might be undefined are explicitly null for the form
           initialGravity: existingRecipe.initialGravity ?? null,
           finalGravity: existingRecipe.finalGravity ?? null,
           colorEBC: existingRecipe.colorEBC ?? null,
           bitternessIBU: existingRecipe.bitternessIBU ?? null,
           alcoholABV: existingRecipe.alcoholABV ?? null,
           fermentationStartDate: existingRecipe.fermentationStartDate ?? null,
+          bottlingDate: existingRecipe.bottlingDate ?? null,
+          conditioningStartDate: existingRecipe.conditioningStartDate ?? null,
+          tastingDate: existingRecipe.tastingDate ?? null,
           notes: existingRecipe.notes ?? '',
           instructions: existingRecipe.instructions ?? '',
-          yeast: existingRecipe.yeast || defaultYeast, // Ensure yeast has a default structure if not present
+          yeast: existingRecipe.yeast || defaultYeast,
         });
       } else {
         toast({
@@ -126,16 +134,19 @@ export default function EditRecipePage() {
 
   function onSubmit(data: RecipeFormData) {
     const recipeToUpdate: Recipe = {
-      id: recipeId, // Critical: use existing ID
+      id: recipeId, 
       ...data,
+      createdAt: getRecipeById(recipeId)?.createdAt || new Date().toISOString(), // Preserve original creation date
       yeast: data.yeast?.name ? { ...data.yeast, id: data.yeast.id || crypto.randomUUID() } : undefined,
-      // Ensure nullable fields are correctly handled
       initialGravity: data.initialGravity === null ? undefined : data.initialGravity,
       finalGravity: data.finalGravity === null ? undefined : data.finalGravity,
       colorEBC: data.colorEBC === null ? undefined : data.colorEBC,
       bitternessIBU: data.bitternessIBU === null ? undefined : data.bitternessIBU,
       alcoholABV: data.alcoholABV === null ? undefined : data.alcoholABV,
       fermentationStartDate: data.fermentationStartDate === null ? undefined : data.fermentationStartDate,
+      bottlingDate: data.bottlingDate === null ? undefined : data.bottlingDate,
+      conditioningStartDate: data.conditioningStartDate === null ? undefined : data.conditioningStartDate,
+      tastingDate: data.tastingDate === null ? undefined : data.tastingDate,
       notes: data.notes === null ? undefined : data.notes,
       instructions: data.instructions === null ? undefined : data.instructions,
     };
@@ -152,6 +163,45 @@ export default function EditRecipePage() {
   if (isLoading) {
     return <div className="container mx-auto py-8 text-center">Chargement de la recette pour modification...</div>;
   }
+
+  const dateField = (name: keyof RecipeFormData, label: string) => (
+    <FormField
+      control={form.control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className="flex flex-col">
+          <FormLabel>{label}</FormLabel>
+          <Popover>
+            <PopoverTrigger asChild>
+              <FormControl>
+                <Button
+                  variant={"outline"}
+                  className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                >
+                  {field.value && isValid(parseISO(field.value)) ? (
+                    format(parseISO(field.value), "PPP", { locale: fr })
+                  ) : (
+                    <span>Choisir une date</span>
+                  )}
+                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                </Button>
+              </FormControl>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={field.value && isValid(parseISO(field.value)) ? parseISO(field.value) : undefined}
+                onSelect={(date) => field.onChange(date?.toISOString())}
+                locale={fr}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
 
   return (
     <Form {...form}>
@@ -236,32 +286,23 @@ export default function EditRecipePage() {
             <YeastFields control={form.control} errors={form.formState.errors} />
 
             <Card className="shadow-md">
-              <CardHeader><CardTitle className="text-xl flex items-center gap-2"><CalendarIcon className="h-5 w-5 text-accent"/>Calendrier & Notes</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-xl flex items-center gap-2"><CalendarDaysIcon className="h-5 w-5 text-accent"/>Calendrier</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <FormField control={form.control} name="fermentationStartDate" render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Date de début de fermentation</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button variant={"outline"} className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}>
-                              {field.value && isValid(parseISO(field.value)) ? format(parseISO(field.value), "PPP", { locale: fr }) : <span>Choisir une date</span>}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={field.value && isValid(parseISO(field.value)) ? parseISO(field.value) : undefined} onSelect={(date) => field.onChange(date?.toISOString())} locale={fr} initialFocus />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                )}/>
+                {dateField("fermentationStartDate", "Date de début de fermentation")}
+                {dateField("bottlingDate", "Date de mise en bouteille")}
+                {dateField("conditioningStartDate", "Date de début de garde / conditionnement")}
+                {dateField("tastingDate", "Date de dégustation prévue")}
+              </CardContent>
+            </Card>
+            
+            <Card className="shadow-md">
+              <CardHeader><CardTitle className="text-xl flex items-center gap-2"><StickyNoteIcon className="h-5 w-5 text-accent"/>Notes & Instructions</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
                  <FormField control={form.control} name="notes" render={({ field }) => (
                       <FormItem><FormLabel>Notes additionnelles</FormLabel><FormControl><Textarea placeholder="Notes sur le brassage, la fermentation, etc." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                   )}/>
                   <FormField control={form.control} name="instructions" render={({ field }) => (
-                      <FormItem><FormLabel>Instructions de brassage (si généré par IA)</FormLabel><FormControl><Textarea placeholder="Instructions de brassage..." {...field} value={field.value ?? ''} rows={8} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Instructions de brassage</FormLabel><FormControl><Textarea placeholder="Instructions de brassage..." {...field} value={field.value ?? ''} rows={8} /></FormControl><FormMessage /></FormItem>
                   )}/>
               </CardContent>
             </Card>
