@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -18,6 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useClient } from "@/hooks/use-client"; // Added useClient hook
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -179,6 +181,13 @@ const Sidebar = React.forwardRef<
     ref
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const isClient = useClient();
+
+    if (!isClient) {
+      // Render null on the server and initial client render to avoid hydration mismatch
+      // This ensures that any structure dependent on `isMobile` is only rendered after client mount
+      return null;
+    }
 
     if (collapsible === "none") {
       return (
