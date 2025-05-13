@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 // import { Label } from "@/components/ui/label"; // Not directly used, FormLabel is used
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2Icon, PlusCircleIcon, WheatIcon, HopIcon, AtomIcon, BlendIcon } from "lucide-react"; // Changed SpicesIcon to BlendIcon
+import { Trash2Icon, PlusCircleIcon, WheatIcon, HopIcon, AtomIcon, BlendIcon } from "lucide-react";
 import { FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -196,7 +196,7 @@ export const HopFields: React.FC<Omit<FieldArrayProps<Recipe['hops'][number]>, '
 export const AdditionalIngredientsFields: React.FC<Omit<FieldArrayProps<AdditionalIngredient>, 'renderFields' | 'title' | 'addItemText' | 'icon'>> = (props) => (
   <DynamicFieldArray
     {...props}
-    name="additionalIngredients" // Make sure this name matches the one in your form schema
+    name="additionalIngredients" 
     title="Ingrédients Supplémentaires"
     addItemText="Ajouter Ingrédient"
     icon={BlendIcon}
@@ -253,7 +253,7 @@ export const YeastFields: React.FC<{ control: Control<Recipe>, errors: FieldErro
   <Card className="shadow-md">
     <CardHeader>
       <CardTitle className="text-xl flex items-center gap-2">
-        <AtomIcon className="h-5 w-5 text-accent" /> {/* Changed Icon */}
+        <AtomIcon className="h-5 w-5 text-accent" />
         Levure
       </CardTitle>
     </CardHeader>
@@ -314,4 +314,3 @@ export const YeastFields: React.FC<{ control: Control<Recipe>, errors: FieldErro
     </CardContent>
   </Card>
 );
-
