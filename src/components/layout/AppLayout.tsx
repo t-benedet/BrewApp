@@ -47,7 +47,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {/* Skeleton Sidebar */}
         <div className="hidden md:flex flex-col w-16 bg-sidebar text-sidebar-foreground p-2 border-r border-sidebar-border">
            <div className="h-14 flex items-center justify-center border-b border-sidebar-border">
-             <Skeleton className="h-7 w-7 rounded-md" />
+             {/* Placeholder for logo or app name if it were in sidebar header */}
            </div>
            <div className="flex-grow mt-4 space-y-2">
              {[...Array(navItems.length)].map((_, i) => (
@@ -55,6 +55,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   <Skeleton key={i} className="h-8 w-8 rounded-md" />
                </div>
              ))}
+           </div>
+           <div className="mt-auto h-14 flex items-center justify-center border-t border-sidebar-border">
+            <Skeleton className="h-7 w-7 rounded-md" />
            </div>
          </div>
         {/* Main Content Area */}
@@ -88,9 +91,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
     <SidebarProvider defaultOpen> {/* defaultOpen is true, meaning sidebar is initially expanded on client if not mobile */}
       <Sidebar collapsible="icon"> {/* collapsible="icon" allows collapsing to icon-only view */}
         <SidebarRail /> 
-        <SidebarHeader className="p-4 flex items-center group-data-[collapsible=icon]:justify-center justify-end">
-          {/* SidebarTrigger is now inside SidebarHeader, centered when collapsed */}
-          <SidebarTrigger className="hidden md:flex group-data-[collapsible=icon]:mx-auto" />
+        <SidebarHeader className="p-4 flex items-center group-data-[collapsible=icon]:justify-center justify-start border-b border-sidebar-border">
+          {/* App Logo/Name can go here if needed, but currently it's in the main header */}
+          {/* <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-sidebar-primary group-data-[collapsible=icon]:hidden">
+            <BeerIcon className="h-6 w-6" />
+            <span>BrewMate</span>
+          </Link> */}
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
@@ -110,8 +116,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
             ))}
           </SidebarMenu>
         </SidebarContent>
-        <SidebarFooter className="p-4">
-          {/* Footer content if any */}
+        <SidebarFooter className="p-4 border-t border-sidebar-border flex group-data-[collapsible=icon]:justify-center justify-end">
+           {/* SidebarTrigger is now inside SidebarFooter */}
+           <SidebarTrigger className="hidden md:flex group-data-[collapsible=icon]:mx-auto" />
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
