@@ -102,5 +102,3 @@ const generateBeerRecipeFlow = ai.defineFlow(
     return output;
   }
 );
-
-```
